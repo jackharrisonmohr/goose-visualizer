@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="64" height="96" xmlns="http://www.w3.org/2000/svg">
+  <!-- Isometric bookshelf -->
+  <g>
+    <!-- Bookshelf frame -->
+    <polygon points="10,30 54,30 54,90 10,90" fill="#8b4513" stroke="#000" stroke-width="1"/>
+    
+    <!-- Shelf dividers -->
+    <line x1="10" y1="45" x2="54" y2="45" stroke="#000" stroke-width="1"/>
+    <line x1="10" y1="60" x2="54" y2="60" stroke="#000" stroke-width="1"/>
+    <line x1="10" y1="75" x2="54" y2="75" stroke="#000" stroke-width="1"/>
+    
+    <!-- Books on shelves -->
+    <!-- Top shelf -->
+    <rect x="12" y="32" width="8" height="12" fill="#f00"/>
+    <rect x="21" y="32" width="5" height="12" fill="#0f0"/>
+    <rect x="27" y="32" width="10" height="12" fill="#00f"/>
+    <rect x="38" y="32" width="7" height="12" fill="#ff0"/>
+    <rect x="46" y="32" width="6" height="12" fill="#f0f"/>
+    
+    <!-- Second shelf -->
+    <rect x="12" y="47" width="6" height="12" fill="#0ff"/>
+    <rect x="19" y="47" width="12" height="12" fill="#8b0"/>
+    <rect x="32" y="47" width="8" height="12" fill="#f80"/>
+    <rect x="41" y="47" width="10" height="12" fill="#08f"/>
+    
+    <!-- Third shelf -->
+    <rect x="12" y="62" width="9" height="12" fill="#f08"/>
+    <rect x="22" y="62" width="7" height="12" fill="#880"/>
+    <rect x="30" y="62" width="5" height="12" fill="#808"/>
+    <rect x="36" y="62" width="8" height="12" fill="#088"/>
+    <rect x="45" y="62" width="7" height="12" fill="#f88"/>
+    
+    <!-- Bottom shelf -->
+    <rect x="12" y="77" width="10" height="12" fill="#8f8"/>
+    <rect x="23" y="77" width="8" height="12" fill="#88f"/>
+    <rect x="32" y="77" width="6" height="12" fill="#f8f"/>
+    <rect x="39" y="77" width="12" height="12" fill="#8ff"/>
+  </g>
+</svg>

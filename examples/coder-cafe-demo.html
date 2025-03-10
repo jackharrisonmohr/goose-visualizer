@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GooseVisualizer Coder Café Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        #visualization-container {
+            width: 900px;
+            height: 600px;
+            border: 1px solid #ccc;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        .controls {
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #795548;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #5d4037;
+        }
+        button.active {
+            background-color: #4e342e;
+        }
+        .theme-config {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .config-item {
+            margin-bottom: 10px;
+        }
+        .config-item label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .config-panel {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .status {
+            margin-top: 10px;
+            font-style: italic;
+            color: #666;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+        .coffee-icon:before {
+            content: "☕";
+            margin-right: 5px;
+        }
+        .code-icon:before {
+            content: "📝";
+            margin-right: 5px;
+        }
+        .title-container {
+            display: flex;
+            align-items: center;
+        }
+        .description {
+            color: #666;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="title-container">
+        <h1><span class="coffee-icon"></span> GooseVisualizer Coder Café Demo</h1>
+    </div>
+    
+    <p class="description">
+        Welcome to the Coder Café visualization! This demo shows AI agents collaborating in a cozy café environment.
+        Agents can sit at tables, work on tasks, and communicate with each other.
+    </p>
+    
+    <div class="controls">
+        <button id="connect-btn">Connect to MCP</button>
+        <button id="disconnect-btn">Disconnect</button>
+    </div>
+    
+    <div class="config-panel">
+        <h2>Café Environment Settings</h2>
+        <div id="theme-config" class="theme-config">
+            <div class="config-item">
+                <label for="config-showGrid">Show Grid</label>
+                <input type="checkbox" id="config-showGrid">
+            </div>
+            <div class="config-item">
+                <label for="config-floorColor">Floor Color</label>
+                <input type="color" id="config-floorColor" value="#e8d4b9">
+            </div>
+            <div class="config-item">
+                <label for="config-wallColor">Wall Color</label>
+                <input type="color" id="config-wallColor" value="#a67c52">
+            </div>
+            <div class="config-item">
+                <label for="config-agentScale">Agent Scale</label>
+                <input type="range" id="config-agentScale" min="0.5" max="1.5" step="0.1" value="1.0">
+                <span id="scale-value">1.0</span>
+            </div>
+            <div class="config-item">
+                <label for="config-timeOfDay">Time of Day</label>
+                <select id="config-timeOfDay">
+                    <option value="morning">Morning</option>
+                    <option value="afternoon" selected>Afternoon</option>
+                    <option value="evening">Evening</option>
+                </select>
+            </div>
+            <div class="config-item">
+                <label for="config-enableShadows">Enable Shadows</label>
+                <input type="checkbox" id="config-enableShadows" checked>
+            </div>
+        </div>
+        <button id="apply-config-btn">Apply Configuration</button>
+    </div>
+    
+    <div id="visualization-container"></div>
+    
+    <h2><span class="code-icon"></span> Simulation Controls</h2>
+    <div class="controls">
+        <button id="add-agent-btn">Add Agent</button>
+        <button id="add-task-btn">Add Task</button>
+        <button id="assign-task-btn">Assign Task</button>
+        <button id="complete-task-btn">Complete Task</button>
+        <button id="send-message-btn">Send Message</button>
+    </div>
+    
+    <div class="controls">
+        <button id="random-positions-btn">Randomize Positions</button>
+        <button id="reset-btn">Reset All</button>
+    </div>
+    
+    <div class="status" id="status-message">Ready to start the café simulation.</div>
+    
+    <script type="module">
+        import { GooseVisualizer, Simple2DThemePlugin, DemoThemePlugin, IsometricOfficeThemePlugin, CoderCafeThemePlugin } from '../dist/index.js';
+        
+        // Create a new visualizer instance with no initial theme
+        const visualizer = new GooseVisualizer({
+            mcpServer: 'http://localhost:3001/sse',
+            theme: '', // No initial theme, we'll register them manually
+            elementId: 'visualization-container',
+            autoConnect: false,
+            width: 900,
+            height: 600
+        });
+        
+        // Register theme plugins explicitly - this avoids any duplicate registration issues
+        visualizer.registerThemePlugin(Simple2DThemePlugin);
+        visualizer.registerThemePlugin(DemoThemePlugin);
+        visualizer.registerThemePlugin(IsometricOfficeThemePlugin);
+        visualizer.registerThemePlugin(CoderCafeThemePlugin);
+        
+        // Make visualizer globally accessible for debugging
+        window.visualizer = visualizer;
+        
+        // Initialize the visualizer
+        visualizer.initialize().then(async () => {
+            console.log('GooseVisualizer initialized successfully');
+            
+            // Switch to coder café theme after initialization
+            try {
+                await visualizer.setTheme('coder-cafe');
+                updateStatus('Visualizer initialized with Coder Café theme. Ready to add agents and tasks.');
+            } catch (error) {
+                console.error('Error switching to coder café theme:', error);
+                updateStatus('Visualizer initialized. Using fallback theme.');
+            }
+        }).catch(error => {
+            console.error('Failed to initialize GooseVisualizer:', error);
+            updateStatus('Error initializing visualizer: ' + error.message);
+        });
+        
+        // Apply café configuration
+        document.getElementById('apply-config-btn').addEventListener('click', async () => {
+            const config = {
+                showGrid: document.getElementById('config-showGrid').checked,
+                floorColor: document.getElementById('config-floorColor').value,
+                wallColor: document.getElementById('config-wallColor').value,
+                agentScale: parseFloat(document.getElementById('config-agentScale').value),
+                timeOfDay: document.getElementById('config-timeOfDay').value,
+                enableShadows: document.getElementById('config-enableShadows').checked
+            };
+            
+            await visualizer.setTheme('coder-cafe', { options: config });
+            updateStatus('Applied café configuration');
+        });
+        
+        // Update scale value display
+        document.getElementById('config-agentScale').addEventListener('input', (e) => {
+            document.getElementById('scale-value').textContent = e.target.value;
+        });
+        
+        // Connect to MCP server
+        document.getElementById('connect-btn').addEventListener('click', () => {
+            visualizer.connect().then(() => {
+                updateStatus('Connected to MCP server');
+            }).catch(error => {
+                console.error('Failed to connect to MCP server:', error);
+                
+                // For demo purposes, we'll simulate a connection
+                updateStatus('Simulating connection for demo purposes');
+            });
+        });
+        
+        // Disconnect from MCP server
+        document.getElementById('disconnect-btn').addEventListener('click', () => {
+            visualizer.disconnect();
+            updateStatus('Disconnected from MCP server');
+        });
+        
+        // SIMULATION FUNCTIONS
+        // These functions simulate MCP events for demonstration purposes
+        
+        // Store agents and tasks for the manual implementation
+        const agents = [];
+        const tasks = [];
+        const messages = [];
+        
+        // Coder agent types and names
+        const agentTypes = [
+            { role: 'Front-end Engineer', names: ['React', 'Vue', 'Angular', 'Svelte'] },
+            { role: 'Back-end Engineer', names: ['Node', 'Django', 'Flask', 'Spring'] },
+            { role: 'DevOps', names: ['Docker', 'Kubernetes', 'Jenkins', 'Terraform'] },
+            { role: 'AI Specialist', names: ['Claude', 'Llama', 'GPT', 'Gemini'] },
+            { role: 'Data Scientist', names: ['Pandas', 'NumPy', 'TensorFlow', 'PyTorch'] }
+        ];
+        
+        // Task types
+        const taskTypes = [
+            'Implement feature',
+            'Fix bug',
+            'Write tests',
+            'Refactor code',
+            'Documentation',
+            'Code review',
+            'Design API'
+        ];
+        
+        // Add a simulated agent
+        document.getElementById('add-agent-btn').addEventListener('click', () => {
+            // Get a random agent type
+            const agentType = agentTypes[Math.floor(Math.random() * agentTypes.length)];
+            const names = agentType.names;
+            const name = names[Math.floor(Math.random() * names.length)];
+            
+            // Create agent
+            const id = `agent-${Date.now()}`;
+            const agent = {
+                id: id,
+                name: `${name}`,
+                role: agentType.role,
+                color: getRandomColor(),
+                state: 'idle',
+                createdAt: Date.now(),
+                lastActive: Date.now(),
+            };
+            
+            // Add to local collection
+            agents.push(agent);
+            
+            try {
+                // Using the adapter to dispatch the event
+                const data = {
+                    type: 'agent:registered',
+                    agent: {
+                        id: agent.id,
+                        name: agent.name,
+                        color: agent.color,
+                    }
+                };
+                
+                const event = new MessageEvent('message', {
+                    data: JSON.stringify(data)
+                });
+                
+                visualizer.mcpAdapter.handleMessage(event);
+                
+                // Also dispatch a DOM event for the theme to catch
+                const customEvent = new CustomEvent('agent:registered', {
+                    detail: {
+                        agent: agent
+                    },
+                    bubbles: true
+                });
+                document.dispatchEvent(customEvent);
+                updateStatus(`Added agent: ${agent.name}, the ${agent.role}`);
+            } catch (error) {
+                console.error('Error adding agent:', error);
+                updateStatus('Error adding agent: ' + error.message);
+            }
+        });
+        
+        // Add a simulated task
+        document.getElementById('add-task-btn').addEventListener('click', () => {
+            // Get a random task type
+            const taskType = taskTypes[Math.floor(Math.random() * taskTypes.length)];
+            const id = `task-${Date.now()}`;
+            const task = {
+                id: id,
+                description: `${taskType}`,
+                state: 'pending',
+                createdAt: Date.now(),
+            };
+            
+            // Add to local collection
+            tasks.push(task);
+            
+            try {
+                // Using the adapter to dispatch the event
+                const data = {
+                    type: 'task:added',
+                    task: {
+                        id: task.id,
+                        description: task.description
+                    }
+                };
+                
+                const event = new MessageEvent('message', {
+                    data: JSON.stringify(data)
+                });
+                
+                visualizer.mcpAdapter.handleMessage(event);
+                
+                // Also dispatch a DOM event for the theme to catch
+                const customEvent = new CustomEvent('task:added', {
+                    detail: {
+                        task: task
+                    },
+                    bubbles: true
+                });
+                document.dispatchEvent(customEvent);
+                updateStatus(`Added task: ${task.description}`);
+            } catch (error) {
+                console.error('Error adding task:', error);
+                updateStatus('Error adding task: ' + error.message);
+            }
+        });
+        
+        // Assign a task to an agent
+        document.getElementById('assign-task-btn').addEventListener('click', () => {
+            try {
+                const pendingTasks = tasks.filter(task => task.state === 'pending');
+                
+                if (pendingTasks.length === 0) {
+                    updateStatus('No pending tasks available');
+                    return;
+                }
+                
+                if (agents.length === 0) {
+                    updateStatus('No agents available');
+                    return;
+                }
+                
+                // Get a random pending task and agent
+                const task = pendingTasks[Math.floor(Math.random() * pendingTasks.length)];
+                const agent = agents[Math.floor(Math.random() * agents.length)];
+                
+                // Update task state
+                task.state = 'assigned';
+                task.assignedTo = agent.id;
+                
+                // Update agent state
+                agent.state = 'working';
+                agent.lastActive = Date.now();
+                agent.assignedTaskId = task.id;
+                
+                // Dispatch event
+                const data = {
+                    type: 'task:assigned',
+                    taskId: task.id,
+                    agentId: agent.id
+                };
+                
+                const event = new MessageEvent('message', {
+                    data: JSON.stringify(data)
+                });
+                
+                visualizer.mcpAdapter.handleMessage(event);
+                
+                // Also dispatch a DOM event for the theme to catch
+                const customEvent = new CustomEvent('task:assigned', {
+                    detail: {
+                        taskId: task.id,
+                        agentId: agent.id,
+                        task,
+                        agent
+                    },
+                    bubbles: true
+                });
+                document.dispatchEvent(customEvent);
+                updateStatus(`Assigned task "${task.description}" to ${agent.name}`);
+            } catch (error) {
+                console.error('Error assigning task:', error);
+                updateStatus('Error assigning task: ' + error.message);
+            }
+        });
+        
+        // Complete a task
+        document.getElementById('complete-task-btn').addEventListener('click', () => {
+            try {
+                const assignedTasks = tasks.filter(task => task.state === 'assigned');
+                
+                if (assignedTasks.length === 0) {
+                    updateStatus('No assigned tasks available');
+                    return;
+                }
+                
+                // Get a random assigned task
+                const task = assignedTasks[Math.floor(Math.random() * assignedTasks.length)];
+                
+                // Update task state
+                task.state = 'completed';
+                task.completedAt = Date.now();
+                
+                // Update agent state if applicable
+                if (task.assignedTo) {
+                    const agent = agents.find(a => a.id === task.assignedTo);
+                    if (agent) {
+                        agent.state = 'idle';
+                        agent.lastActive = Date.now();
+                        agent.assignedTaskId = null;
+                    }
+                }
+                
+                // Dispatch event
+                const data = {
+                    type: 'task:completed',
+                    taskId: task.id
+                };
+                
+                const event = new MessageEvent('message', {
+                    data: JSON.stringify(data)
+                });
+                
+                visualizer.mcpAdapter.handleMessage(event);
+                
+                // Also dispatch a DOM event for the theme to catch
+                const customEvent = new CustomEvent('task:completed', {
+                    detail: {
+                        taskId: task.id,
+                        task
+                    },
+                    bubbles: true
+                });
+                document.dispatchEvent(customEvent);
+                updateStatus(`Completed task: ${task.description}`);
+            } catch (error) {
+                console.error('Error completing task:', error);
+                updateStatus('Error completing task: ' + error.message);
+            }
+        });
+        
+        // Send a message between agents
+        document.getElementById('send-message-btn').addEventListener('click', () => {
+            try {
+                if (agents.length < 2) {
+                    updateStatus('Need at least 2 agents to send a message');
+                    return;
+                }
+                
+                // Select random sender and recipient
+                const senderIndex = Math.floor(Math.random() * agents.length);
+                let recipientIndex;
+                do {
+                    recipientIndex = Math.floor(Math.random() * agents.length);
+                } while (recipientIndex === senderIndex);
+                
+                const sender = agents[senderIndex];
+                const recipient = agents[recipientIndex];
+                
+                // Create message
+                const message = {
+                    id: `msg-${Date.now()}`,
+                    senderId: sender.id,
+                    receiverId: recipient.id,
+                    content: `Hello from ${sender.name} to ${recipient.name}!`,
+                    timestamp: Date.now()
+                };
+                
+                // Add to local collection
+                messages.push(message);
+                
+                // Update sender state
+                sender.state = 'active';
+                sender.lastActive = Date.now();
+                
+                // Dispatch event
+                const data = {
+                    type: 'message:added',
+                    message: {
+                        id: message.id,
+                        senderId: sender.id,
+                        receiverId: recipient.id,
+                        content: message.content
+                    }
+                };
+                
+                const event = new MessageEvent('message', {
+                    data: JSON.stringify(data)
+                });
+                
+                visualizer.mcpAdapter.handleMessage(event);
+                
+                // Also dispatch a DOM event for the theme to catch
+                const customEvent = new CustomEvent('message:added', {
+                    detail: {
+                        message: message
+                    },
+                    bubbles: true
+                });
+                document.dispatchEvent(customEvent);
+                updateStatus(`${sender.name} sent a message to ${recipient.name}`);
+            } catch (error) {
+                console.error('Error sending message:', error);
+                updateStatus('Error sending message: ' + error.message);
+            }
+        });
+        
+        // Randomize positions of agents and tasks
+        document.getElementById('random-positions-btn').addEventListener('click', () => {
+            try {
+                // Update entity positions by sending custom events
+                agents.forEach(agent => {
+                    const x = Math.floor(Math.random() * 12) + 1; // Avoid walls
+                    const y = Math.floor(Math.random() * 12) + 1; // Avoid walls
+                    
+                    // Custom event for repositioning
+                    const data = {
+                        type: 'agent:moved',
+                        agentId: agent.id,
+                        position: { x, y, z: 0 }
+                    };
+                    
+                    const event = new MessageEvent('message', {
+                        data: JSON.stringify(data)
+                    });
+                    
+                    visualizer.mcpAdapter.handleMessage(event);
+                    
+                    // Also dispatch a DOM event for the theme to catch
+                    const customEvent = new CustomEvent('agent:moved', {
+                        detail: {
+                            agentId: agent.id,
+                            position: { x, y, z: 0 }
+                        },
+                        bubbles: true
+                    });
+                    document.dispatchEvent(customEvent);
+                });
+                
+                tasks.forEach(task => {
+                    const x = Math.floor(Math.random() * 12) + 1;
+                    const y = Math.floor(Math.random() * 12) + 1;
+                    
+                    // Custom event for repositioning
+                    const data = {
+                        type: 'task:moved',
+                        taskId: task.id,
+                        position: { x, y, z: 0.5 }
+                    };
+                    
+                    const event = new MessageEvent('message', {
+                        data: JSON.stringify(data)
+                    });
+                    
+                    visualizer.mcpAdapter.handleMessage(event);
+                    
+                    // Also dispatch a DOM event for the theme to catch
+                    const customEvent = new CustomEvent('task:moved', {
+                        detail: {
+                            taskId: task.id,
+                            position: { x, y, z: 0.5 }
+                        },
+                        bubbles: true
+                    });
+                    document.dispatchEvent(customEvent);
+                });
+                
+                updateStatus('Randomized positions of all entities');
+            } catch (error) {
+                console.error('Error randomizing positions:', error);
+                updateStatus('Error randomizing positions: ' + error.message);
+            }
+        });
+        
+        // Reset all entities
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            try {
+                // Clear all collections
+                agents.length = 0;
+                tasks.length = 0;
+                messages.length = 0;
+                
+                // Custom reset event
+                const data = {
+                    type: 'system:reset'
+                };
+                
+                const event = new MessageEvent('message', {
+                    data: JSON.stringify(data)
+                });
+                
+                visualizer.mcpAdapter.handleMessage(event);
+                
+                // Also dispatch a DOM event for the theme to catch
+                const customEvent = new CustomEvent('system:reset', {
+                    bubbles: true
+                });
+                document.dispatchEvent(customEvent);
+                updateStatus('Reset all entities');
+            } catch (error) {
+                console.error('Error resetting:', error);
+                updateStatus('Error resetting: ' + error.message);
+            }
+        });
+        
+        // Update status message
+        function updateStatus(message) {
+            const statusEl = document.getElementById('status-message');
+            statusEl.textContent = message;
+            console.log(message);
+        }
+        
+        // Helper function to generate random colors
+        function getRandomColor() {
+            const hue = Math.floor(Math.random() * 360);
+            return `hsl(${hue}, 70%, 60%)`;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GooseVisualizer Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        #visualization-container {
+            width: 800px;
+            height: 600px;
+            border: 1px solid #ccc;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .controls {
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 10;
+        }
+        button {
+            padding: 8px 16px;
+            margin-right: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>GooseVisualizer Demo</h1>
+    
+    <div class="controls">
+        <button id="connect-btn">Connect to MCP</button>
+        <button id="disconnect-btn">Disconnect</button>
+    </div>
+    
+    <div id="visualization-container"></div>
+    
+    <h2>Simulation Controls</h2>
+    <div class="controls">
+        <button id="add-agent-btn">Add Agent</button>
+        <button id="add-task-btn">Add Task</button>
+        <button id="assign-task-btn">Assign Task</button>
+        <button id="complete-task-btn">Complete Task</button>
+        <button id="send-message-btn">Send Message</button>
+    </div>
+    
+    <script type="module">
+        // *** STANDALONE DEMO IMPLEMENTATION ***
+        // This demo doesn't rely on GooseVisualizer class due to module loading issues
+        
+        // Create a simple 2D canvas for visualization
+        function setupBasicCanvas() {
+            const container = document.getElementById('visualization-container');
+            const canvas = document.createElement('canvas');
+            canvas.width = 800;
+            canvas.height = 600;
+            canvas.style.position = 'absolute';
+            canvas.style.top = '0';
+            canvas.style.left = '0';
+            container.innerHTML = '';
+            container.appendChild(canvas);
+            
+            // Draw something on the canvas to show it's working
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.fillStyle = '#f0f0f0';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.font = '24px Arial';
+                ctx.fillStyle = '#333';
+                ctx.textAlign = 'center';
+                ctx.fillText('GooseVisualizer Demo - Click Buttons Below', canvas.width/2, 30);
+                
+                // Draw grid - starting at y=100 to avoid overlapping with the title
+                ctx.beginPath();
+                ctx.strokeStyle = '#dddddd';
+                ctx.lineWidth = 1;
+                
+                for (let x = 50; x < canvas.width; x += 50) {
+                    ctx.moveTo(x, 100);
+                    ctx.lineTo(x, canvas.height);
+                }
+                
+                for (let y = 100; y < canvas.height; y += 50) {
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(canvas.width, y);
+                }
+                
+                ctx.stroke();
+                ctx.closePath();
+            }
+            
+            return { canvas, ctx };
+        }
+        
+        // Set up a basic canvas first
+        const { canvas, ctx } = setupBasicCanvas();
+        
+        // Make canvas accessible globally
+        window.visualizerCanvas = canvas;
+        window.visualizerCtx = ctx;
+        
+        // Simulate connected/disconnected state
+        let connected = false;
+        
+        // Connect to MCP server (simulated)
+        document.getElementById('connect-btn').addEventListener('click', () => {
+            connected = true;
+            console.log('Demo: Connected to simulated MCP server');
+            
+            // Redraw with connection status
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#00aa00';
+            ctx.textAlign = 'center';
+            ctx.fillText('✓ Connected to simulated MCP server', canvas.width/2, 80);
+        });
+        
+        // Disconnect from MCP server (simulated)
+        document.getElementById('disconnect-btn').addEventListener('click', () => {
+            connected = false;
+            console.log('Demo: Disconnected from simulated MCP server');
+            
+            // Clear the connection status
+            ctx.fillStyle = '#f0f0f0';
+            ctx.fillRect(0, 70, canvas.width, 20);
+            
+            // Redraw the grid lines
+            ctx.beginPath();
+            ctx.strokeStyle = '#dddddd';
+            ctx.lineWidth = 1;
+            for (let y = 50; y < 100; y += 50) {
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+            }
+            ctx.stroke();
+            ctx.closePath();
+        });
+        
+        // SIMULATION FUNCTIONS
+        // These functions simulate MCP events for demonstration purposes
+        
+        // Store agents and tasks for the manual implementation
+        const agents = [];
+        const tasks = [];
+        const messages = [];
+        
+        // Add a simulated agent
+        document.getElementById('add-agent-btn').addEventListener('click', () => {
+            // We're simulating MCP events by directly accessing the adapter's private method
+            // In a real scenario, these events would come from the MCP server
+            const id = `agent-${Date.now()}`;
+            const agent = {
+                id: id,
+                name: `Agent ${id.slice(-3)}`,
+                color: getRandomColor(),
+                state: 'idle',
+                createdAt: Date.now(),
+                lastActive: Date.now(),
+                position: {
+                    x: 50 + (agents.length % 5) * 120,
+                    y: 150 + Math.floor(agents.length / 5) * 120
+                }
+            };
+            
+            // Add to local collection
+            agents.push(agent);
+            
+            console.log('Added agent:', agent);
+            
+            // Just log the action for demo purposes
+            console.log(`Added agent: ${id}`);
+            
+            // Draw all agents on our fallback canvas
+            redrawCanvas();
+        });
+        
+        // Add a simulated task
+        document.getElementById('add-task-btn').addEventListener('click', () => {
+            const id = `task-${Date.now()}`;
+            const task = {
+                id: id,
+                description: `Task ${id.slice(-3)}`,
+                state: 'pending',
+                createdAt: Date.now(),
+                position: {
+                    x: window.visualizerCanvas.width - 150,
+                    y: 150 + tasks.length * 80
+                }
+            };
+            
+            // Add to local collection
+            tasks.push(task);
+            
+            console.log('Added task:', task);
+            
+            // Just log the action for demo purposes
+            console.log(`Added task: ${id}`);
+            
+            // Draw everything on our fallback canvas
+            redrawCanvas();
+        });
+        
+        // Assign a task to an agent
+        document.getElementById('assign-task-btn').addEventListener('click', () => {
+            try {
+                // Find an unassigned task and available agent
+                const pendingTask = tasks.find(task => task.state === 'pending');
+                
+                if (!pendingTask) {
+                    console.log('No pending tasks available');
+                    return;
+                }
+                
+                if (agents.length === 0) {
+                    console.log('No agents available');
+                    return;
+                }
+                
+                // Assign to a random agent
+                const randomAgent = agents[Math.floor(Math.random() * agents.length)];
+                
+                // Update the task in our local arrays
+                pendingTask.state = 'assigned';
+                pendingTask.assignedTo = randomAgent.id;
+                
+                // Update the agent state
+                randomAgent.state = 'working';
+                randomAgent.lastActive = Date.now();
+                
+                console.log(`Assigned task ${pendingTask.id} to agent ${randomAgent.id}`);
+                
+                // Just log the action for demo purposes
+                console.log(`Assigned task ${pendingTask.id} to agent ${randomAgent.id}`);
+                
+                // Redraw the canvas
+                redrawCanvas();
+            } catch (error) {
+                console.error('Error assigning task:', error);
+            }
+        });
+        
+        // Complete a task
+        document.getElementById('complete-task-btn').addEventListener('click', () => {
+            try {
+                // Find an assigned task
+                const assignedTask = tasks.find(task => task.state === 'assigned');
+                
+                if (!assignedTask) {
+                    console.log('No assigned tasks available');
+                    return;
+                }
+                
+                // Update task in our local array
+                assignedTask.state = 'completed';
+                assignedTask.completedAt = Date.now();
+                
+                // Find the agent and update its state
+                if (assignedTask.assignedTo) {
+                    const agent = agents.find(a => a.id === assignedTask.assignedTo);
+                    if (agent) {
+                        agent.state = 'idle';
+                        agent.lastActive = Date.now();
+                    }
+                }
+                
+                console.log(`Completed task ${assignedTask.id}`);
+                
+                // Just log the action for demo purposes
+                console.log(`Completed task ${assignedTask.id}`);
+                
+                // Redraw the canvas
+                redrawCanvas();
+            } catch (error) {
+                console.error('Error completing task:', error);
+            }
+        });
+        
+        // Send a message between agents
+        document.getElementById('send-message-btn').addEventListener('click', () => {
+            try {
+                if (agents.length < 2) {
+                    console.log('Need at least 2 agents to send a message');
+                    return;
+                }
+                
+                // Select random sender and recipient
+                const senderIndex = Math.floor(Math.random() * agents.length);
+                let recipientIndex;
+                do {
+                    recipientIndex = Math.floor(Math.random() * agents.length);
+                } while (recipientIndex === senderIndex);
+                
+                const sender = agents[senderIndex];
+                const recipient = agents[recipientIndex];
+                
+                // Create a message animation
+                const message = {
+                    id: `msg-${Date.now()}`,
+                    senderId: sender.id,
+                    receiverId: recipient.id,
+                    content: `Hello from ${sender.id} to ${recipient.id}!`,
+                    timestamp: Date.now(),
+                    from: { ...sender.position },
+                    to: { ...recipient.position },
+                    progress: 0,
+                };
+                
+                // Add to local collection
+                messages.push(message);
+                
+                // Update sender state
+                sender.state = 'active';
+                sender.lastActive = Date.now();
+                
+                console.log(`Sent message from ${sender.id} to ${recipient.id}`);
+                
+                // Just log the action for demo purposes
+                console.log(`Sent message from ${sender.id} to ${recipient.id}`);
+                
+                // Set up animation for the message
+                let animationId;
+                const animateMessage = () => {
+                    // Update progress
+                    message.progress += 0.02; // 2% progress per frame
+                    
+                    if (message.progress >= 1) {
+                        // Message has reached its destination
+                        message.progress = 1;
+                        
+                        // Remove message after a delay
+                        setTimeout(() => {
+                            const index = messages.indexOf(message);
+                            if (index !== -1) {
+                                messages.splice(index, 1);
+                                redrawCanvas();
+                            }
+                        }, 1000);
+                        
+                        // Stop animation
+                        cancelAnimationFrame(animationId);
+                    } else {
+                        // Continue animation
+                        animationId = requestAnimationFrame(animateMessage);
+                    }
+                    
+                    // Redraw the canvas
+                    redrawCanvas();
+                };
+                
+                // Start animation
+                animationId = requestAnimationFrame(animateMessage);
+            } catch (error) {
+                console.error('Error sending message:', error);
+            }
+        });
+        
+        // Add function to redraw the canvas with all entities
+        function redrawCanvas() {
+            if (!window.visualizerCtx || !window.visualizerCanvas) return;
+            
+            const ctx = window.visualizerCtx;
+            const canvas = window.visualizerCanvas;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw background
+            ctx.fillStyle = '#f0f0f0';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw title
+            ctx.font = '24px Arial';
+            ctx.fillStyle = '#333';
+            ctx.textAlign = 'center';
+            ctx.fillText('GooseVisualizer Demo', canvas.width/2, 30);
+            
+            // Draw connection status if connected
+            if (connected) {
+                ctx.font = '14px Arial';
+                ctx.fillStyle = '#00aa00';
+                ctx.textAlign = 'center';
+                ctx.fillText('✓ Connected to simulated MCP server', canvas.width/2, 60);
+            }
+            
+            // Draw grid - starting at y=100 to avoid overlapping with the title
+            ctx.beginPath();
+            ctx.strokeStyle = '#dddddd';
+            ctx.lineWidth = 1;
+            
+            for (let x = 50; x < canvas.width; x += 50) {
+                ctx.moveTo(x, 100);
+                ctx.lineTo(x, canvas.height);
+            }
+            
+            for (let y = 100; y < canvas.height; y += 50) {
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+            }
+            
+            ctx.stroke();
+            ctx.closePath();
+            
+            // Draw agents
+            agents.forEach(agent => {
+                const { x, y } = agent.position;
+                const radius = 20;
+                
+                // Main circle
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fillStyle = agent.color;
+                ctx.fill();
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.closePath();
+                
+                // State indicator
+                const stateColors = {
+                    idle: '#aaaaaa',
+                    active: '#00ff00',
+                    thinking: '#ffff00',
+                    working: '#ff9900',
+                    waiting: '#0099ff',
+                    disconnected: '#ff0000',
+                };
+                
+                ctx.beginPath();
+                ctx.arc(x + radius / 2, y - radius / 2, radius / 4, 0, Math.PI * 2);
+                ctx.fillStyle = stateColors[agent.state] || '#aaaaaa';
+                ctx.fill();
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.closePath();
+                
+                // Agent name
+                ctx.font = '12px Arial';
+                ctx.fillStyle = '#000';
+                ctx.textAlign = 'center';
+                ctx.fillText(agent.name, x, y + radius + 15);
+            });
+            
+            // Draw tasks
+            tasks.forEach(task => {
+                const { x, y } = task.position;
+                const width = 120;
+                const height = 60;
+                const radius = 10;
+                
+                // State colors
+                const stateColors = {
+                    pending: '#dddddd',
+                    assigned: '#ffffaa',
+                    in_progress: '#aaffaa',
+                    completed: '#aaaaff',
+                    cancelled: '#ffaaaa',
+                };
+                
+                // Draw rounded rectangle
+                ctx.beginPath();
+                ctx.moveTo(x + radius, y);
+                ctx.lineTo(x + width - radius, y);
+                ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+                ctx.lineTo(x + width, y + height - radius);
+                ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                ctx.lineTo(x + radius, y + height);
+                ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+                ctx.lineTo(x, y + radius);
+                ctx.quadraticCurveTo(x, y, x + radius, y);
+                ctx.fillStyle = stateColors[task.state] || '#dddddd';
+                ctx.fill();
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.closePath();
+                
+                // Task description
+                ctx.font = '12px Arial';
+                ctx.fillStyle = '#000';
+                ctx.textAlign = 'center';
+                ctx.fillText(
+                    task.description.length > 20 ? task.description.substring(0, 17) + '...' : task.description,
+                    x + width / 2,
+                    y + 20
+                );
+                
+                // Task status
+                ctx.font = '10px Arial';
+                ctx.fillStyle = '#444';
+                ctx.fillText(task.state, x + width / 2, y + 40);
+                
+                // Assigned agent if applicable
+                if (task.assignedTo) {
+                    ctx.font = '10px Arial';
+                    ctx.fillStyle = '#444';
+                    ctx.fillText(`Assigned to: ${task.assignedTo}`, x + width / 2, y + 55);
+                }
+            });
+            
+            // Draw messages
+            messages.forEach(message => {
+                const { from, to, progress } = message;
+                
+                // Calculate current position along the path
+                const x = from.x + (to.x - from.x) * progress;
+                const y = from.y + (to.y - from.y) * progress;
+                
+                // Draw message as a small colored circle
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = '#ff00ff';
+                ctx.fill();
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.closePath();
+                
+                // Draw line from sender to current position
+                ctx.beginPath();
+                ctx.moveTo(from.x, from.y);
+                ctx.lineTo(x, y);
+                ctx.strokeStyle = '#ff00ff';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([2, 2]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.closePath();
+            });
+        }
+        
+        // Helper function to generate random colors
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+    </script>
+</body>
+</html>

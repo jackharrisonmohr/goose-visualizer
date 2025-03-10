@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="192" height="80" xmlns="http://www.w3.org/2000/svg">
+  <!-- Frame 1 -->
+  <g transform="translate(0,0)">
+    <!-- Agent body -->
+    <ellipse cx="24" cy="60" rx="15" ry="20" fill="#6b8cce"/>
+    <circle cx="24" cy="30" r="15" fill="#f0d0b0"/>
+    
+    <!-- Agent eyes and face -->
+    <circle cx="19" cy="27" r="2" fill="#000"/>
+    <circle cx="29" cy="27" r="2" fill="#000"/>
+    <path d="M 17 35 Q 24 40 31 35" stroke="#000" fill="none" stroke-width="1"/>
+
+    <!-- Thought bubble -->
+    <circle cx="35" cy="15" r="9" fill="#fff" stroke="#000" stroke-width="1"/>
+    <circle cx="22" cy="12" r="3" fill="#fff" stroke="#000" stroke-width="1"/>
+    <circle cx="16" cy="15" r="2" fill="#fff" stroke="#000" stroke-width="1"/>
+    
+    <!-- Question mark in the thought bubble -->
+    <text x="32" y="19" font-family="Arial" font-size="14" font-weight="bold">?</text>
+  </g>
+  
+  <!-- Frame 2 -->
+  <g transform="translate(48,0)">
+    <!-- Agent body -->
+    <ellipse cx="24" cy="61" rx="15" ry="20" fill="#6b8cce"/>
+    <circle cx="24" cy="31" r="15" fill="#f0d0b0"/>
+    
+    <!-- Agent eyes and face -->
+    <circle cx="19" cy="28" r="2" fill="#000"/>
+    <circle cx="29" cy="28" r="2" fill="#000"/>
+    <path d="M 17 36 Q 24 41 31 36" stroke="#000" fill="none" stroke-width="1"/>
+
+    <!-- Thought bubble -->
+    <circle cx="35" cy="16" r="10" fill="#fff" stroke="#000" stroke-width="1"/>
+    <circle cx="22" cy="13" r="3" fill="#fff" stroke="#000" stroke-width="1"/>
+    <circle cx="16" cy="16" r="2" fill="#fff" stroke="#000" stroke-width="1"/>
+    
+    <!-- Question mark in the thought bubble -->
+    <text x="31" y="20" font-family="Arial" font-size="15" font-weight="bold">?</text>
+  </g>
+  
+  <!-- Frame 3 -->
+  <g transform="translate(96,0)">
+    <!-- Agent body -->
+    <ellipse cx="24" cy="60" rx="15" ry="20" fill="#6b8cce"/>
+    <circle cx="24" cy="30" r="15" fill="#f0d0b0"/>
+    
+    <!-- Agent eyes and face (looking down) -->
+    <circle cx="19" cy="27" r="2" fill="#000"/>
+    <circle cx="29" cy="27" r="2" fill="#000"/>
+    <path d="M 19 36 Q 24 38 29 36" stroke="#000" fill="none" stroke-width="1"/>
+
+    <!-- Thought bubble (larger) -->
+    <circle cx="35" cy="15" r="11" fill="#fff" stroke="#000" stroke-width="1"/>
+    <circle cx="22" cy="12" r="3" fill="#fff" stroke="#000" stroke-width="1"/>
+    <circle cx="16" cy="15" r="2" fill="#fff" stroke="#000" stroke-width="1"/>
+    
+    <!-- Different symbol in the thought bubble -->
+    <text x="31" y="20" font-family="Arial" font-size="16" font-weight="bold">!</text>
+  </g>
+  
+  <!-- Frame 4 -->
+  <g transform="translate(144,0)">
+    <!-- Agent body -->
+    <ellipse cx="24" cy="59" rx="15" ry="20" fill="#6b8cce"/>
+    <circle cx="24" cy="29" r="15" fill="#f0d0b0"/>
+    
+    <!-- Agent eyes and face (eyes wide) -->
+    <circle cx="19" cy="26" r="2.5" fill="#000"/>
+    <circle cx="29" cy="26" r="2.5" fill="#000"/>
+    <path d="M 17 33 Q 24 39 31 33" stroke="#000" fill="none" stroke-width="1"/>
+
+    <!-- Thought bubble (with light bulb) -->
+    <circle cx="35" cy="15" r="10" fill="#fff" stroke="#000" stroke-width="1"/>
+    <circle cx="22" cy="12" r="3" fill="#fff" stroke="#000" stroke-width="1"/>
+    <circle cx="16" cy="15" r="2" fill="#fff" stroke="#000" stroke-width="1"/>
+    
+    <!-- Light bulb in thought bubble -->
+    <path d="M 35 12 L 35 15 M 32 17 L 38 17 M 35 17 L 35 20" stroke="#000" stroke-width="1.5"/>
+    <circle cx="35" cy="12" r="4" fill="#ffff00" stroke="#000" stroke-width="1"/>
+  </g>
+</svg>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+  <!-- Coffee cup -->
+  <g>
+    <!-- Cup body -->
+    <rect x="3" y="4" width="10" height="8" rx="1" ry="1" fill="#ffffff" stroke="#000" stroke-width="1"/>
+    
+    <!-- Cup handle -->
+    <path d="M 13,6 C 15,6 15,10 13,10" fill="none" stroke="#000" stroke-width="1"/>
+    
+    <!-- Cup contents (coffee) -->
+    <rect x="4" y="5" width="8" height="3" rx="1" ry="1" fill="#6f4e37"/>
+    
+    <!-- Steam -->
+    <path d="M 6,3 C 5,2 7,1 6,0" fill="none" stroke="#999" stroke-width="0.5"/>
+    <path d="M 8,3 C 7,2 9,1 8,0" fill="none" stroke="#999" stroke-width="0.5"/>
+    <path d="M 10,3 C 9,2 11,1 10,0" fill="none" stroke="#999" stroke-width="0.5"/>
+  </g>
+</svg>

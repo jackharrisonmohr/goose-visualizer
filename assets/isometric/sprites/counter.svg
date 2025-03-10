@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="128" height="64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Isometric counter -->
+  <g>
+    <!-- Counter top surface -->
+    <polygon points="20,20 108,20 88,40 0,40" fill="#d1c0a5" stroke="#000" stroke-width="1"/>
+    
+    <!-- Counter front face -->
+    <polygon points="0,40 88,40 88,60 0,60" fill="#a67c52" stroke="#000" stroke-width="1"/>
+    
+    <!-- Counter side face -->
+    <polygon points="88,40 108,20 108,40 88,60" fill="#8c6945" stroke="#000" stroke-width="1"/>
+    
+    <!-- Counter details -->
+    <!-- Drawer on front -->
+    <rect x="20" y="45" width="20" height="10" rx="1" fill="#8c6945" stroke="#000" stroke-width="0.5"/>
+    <rect x="46" y="45" width="20" height="10" rx="1" fill="#8c6945" stroke="#000" stroke-width="0.5"/>
+    
+    <!-- Door handle -->
+    <circle cx="55" cy="50" r="1" fill="#d1d1d1" stroke="#000" stroke-width="0.5"/>
+    <circle cx="30" cy="50" r="1" fill="#d1d1d1" stroke="#000" stroke-width="0.5"/>
+    
+    <!-- Items on counter -->
+    <!-- Coffee machine outline -->
+    <rect x="75" y="5" width="15" height="15" rx="1" fill="#444" stroke="#000" stroke-width="0.5"/>
+    <!-- Paper/napkin holder -->
+    <rect x="30" y="10" width="10" height="5" rx="1" fill="#ffffff" stroke="#000" stroke-width="0.5"/>
+  </g>
+</svg>

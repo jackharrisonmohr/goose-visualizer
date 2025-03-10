@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GooseVisualizer Simple Example</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        
+        h1 {
+            margin-bottom: 20px;
+        }
+        
+        #visualization-container {
+            width: 800px;
+            height: 600px;
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+        }
+        
+        .controls {
+            margin-bottom: 20px;
+        }
+        
+        button {
+            padding: 8px 16px;
+            margin-right: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        select {
+            padding: 8px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>GooseVisualizer Simple Example</h1>
+    
+    <div id="visualization-container"></div>
+    
+    <div class="controls">
+        <button id="connect-button">Connect</button>
+        <button id="disconnect-button">Disconnect</button>
+        <select id="theme-selector">
+            <option value="simple-2d">Simple 2D</option>
+            <option value="isometric-office">Isometric Office</option>
+            <option value="network-graph">Network Graph</option>
+        </select>
+        <button id="change-theme-button">Change Theme</button>
+    </div>
+    
+    <div class="actions">
+        <h3>Simulation Actions</h3>
+        <button id="add-agent-button">Add Agent</button>
+        <button id="add-task-button">Add Task</button>
+        <button id="assign-task-button">Assign Task</button>
+        <button id="complete-task-button">Complete Task</button>
+        <button id="send-message-button">Send Message</button>
+    </div>
+    
+    <script type="module">
+        // Import the GooseVisualizer
+        import { GooseVisualizer } from '../../dist/index.js';
+        
+        // Create a new GooseVisualizer instance
+        const visualizer = new GooseVisualizer({
+            mcpServer: 'http://localhost:3001/sse',
+            theme: 'simple-2d',
+            elementId: 'visualization-container',
+            autoConnect: false,
+        });
+        
+        // Initialize the visualizer
+        visualizer.initialize().then(() => {
+            console.log('GooseVisualizer initialized');
+        }).catch(error => {
+            console.error('Error initializing GooseVisualizer:', error);
+        });
+        
+        // Connect to the MCP server
+        document.getElementById('connect-button').addEventListener('click', () => {
+            visualizer.connect().then(() => {
+                console.log('Connected to MCP server');
+            }).catch(error => {
+                console.error('Error connecting to MCP server:', error);
+            });
+        });
+        
+        // Disconnect from the MCP server
+        document.getElementById('disconnect-button').addEventListener('click', () => {
+            visualizer.disconnect();
+            console.log('Disconnected from MCP server');
+        });
+        
+        // Change the theme
+        document.getElementById('change-theme-button').addEventListener('click', () => {
+            const themeSelector = document.getElementById('theme-selector');
+            const themeName = themeSelector.value;
+            
+            visualizer.setTheme(themeName).then(() => {
+                console.log(`Theme changed to ${themeName}`);
+            }).catch(error => {
+                console.error(`Error changing theme to ${themeName}:`, error);
+            });
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const container = document.getElementById('visualization-container');
+            const rect = container.getBoundingClientRect();
+            visualizer.resize(rect.width, rect.height);
+        });
+        
+        // Simulation actions
+        
+        // Add a simulated agent
+        document.getElementById('add-agent-button').addEventListener('click', () => {
+            // In a real application, this would be done through the MCP server
+            // This is just a simulation for the example
+            const agentData = {
+                type: 'agent:registered',
+                agent: {
+                    id: `agent-${Date.now()}`,
+                    name: `Agent ${Math.floor(Math.random() * 100)}`,
+                    color: `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`,
+                }
+            };
+            
+            // Simulate MCP server message
+            const event = new MessageEvent('message', {
+                data: JSON.stringify(agentData)
+            });
+            
+            // Dispatch the event
+            visualizer['mcpAdapter']['handleMessage'](event);
+            
+            console.log('Agent added');
+        });
+        
+        // Add a simulated task
+        document.getElementById('add-task-button').addEventListener('click', () => {
+            // In a real application, this would be done through the MCP server
+            // This is just a simulation for the example
+            const taskData = {
+                type: 'task:added',
+                task: {
+                    id: `task-${Date.now()}`,
+                    description: `Task ${Math.floor(Math.random() * 100)}`,
+                }
+            };
+            
+            // Simulate MCP server message
+            const event = new MessageEvent('message', {
+                data: JSON.stringify(taskData)
+            });
+            
+            // Dispatch the event
+            visualizer['mcpAdapter']['handleMessage'](event);
+            
+            console.log('Task added');
+        });
+        
+        // Assign a simulated task
+        document.getElementById('assign-task-button').addEventListener('click', () => {
+            // Get the first task and agent
+            const tasks = visualizer['mcpAdapter']['getTasks']();
+            const agents = visualizer['mcpAdapter']['getAgents']();
+            
+            if (tasks.length === 0 || agents.length === 0) {
+                console.log('No tasks or agents available');
+                return;
+            }
+            
+            // Find a pending task
+            const pendingTask = tasks.find(task => task.state === 'pending');
+            
+            if (!pendingTask) {
+                console.log('No pending tasks available');
+                return;
+            }
+            
+            // Assign the task to a random agent
+            const randomAgent = agents[Math.floor(Math.random() * agents.length)];
+            
+            // In a real application, this would be done through the MCP server
+            // This is just a simulation for the example
+            const taskData = {
+                type: 'task:assigned',
+                taskId: pendingTask.id,
+                agentId: randomAgent.id
+            };
+            
+            // Simulate MCP server message
+            const event = new MessageEvent('message', {
+                data: JSON.stringify(taskData)
+            });
+            
+            // Dispatch the event
+            visualizer['mcpAdapter']['handleMessage'](event);
+            
+            console.log(`Task ${pendingTask.id} assigned to agent ${randomAgent.id}`);
+        });
+        
+        // Complete a simulated task
+        document.getElementById('complete-task-button').addEventListener('click', () => {
+            // Get the tasks
+            const tasks = visualizer['mcpAdapter']['getTasks']();
+            
+            if (tasks.length === 0) {
+                console.log('No tasks available');
+                return;
+            }
+            
+            // Find an assigned task
+            const assignedTask = tasks.find(task => task.state === 'assigned');
+            
+            if (!assignedTask) {
+                console.log('No assigned tasks available');
+                return;
+            }
+            
+            // In a real application, this would be done through the MCP server
+            // This is just a simulation for the example
+            const taskData = {
+                type: 'task:completed',
+                taskId: assignedTask.id
+            };
+            
+            // Simulate MCP server message
+            const event = new MessageEvent('message', {
+                data: JSON.stringify(taskData)
+            });
+            
+            // Dispatch the event
+            visualizer['mcpAdapter']['handleMessage'](event);
+            
+            console.log(`Task ${assignedTask.id} completed`);
+        });
+        
+        // Send a simulated message
+        document.getElementById('send-message-button').addEventListener('click', () => {
+            // Get the agents
+            const agents = visualizer['mcpAdapter']['getAgents']();
+            
+            if (agents.length < 2) {
+                console.log('Need at least 2 agents to send a message');
+                return;
+            }
+            
+            // Select a random sender and receiver
+            const senderIndex = Math.floor(Math.random() * agents.length);
+            let receiverIndex;
+            do {
+                receiverIndex = Math.floor(Math.random() * agents.length);
+            } while (receiverIndex === senderIndex);
+            
+            const sender = agents[senderIndex];
+            const receiver = agents[receiverIndex];
+            
+            // In a real application, this would be done through the MCP server
+            // This is just a simulation for the example
+            const messageData = {
+                type: 'message:added',
+                message: {
+                    senderId: sender.id,
+                    content: `Hello from ${sender.name} to ${receiver.name}!`,
+                    receiverId: receiver.id
+                }
+            };
+            
+            // Simulate MCP server message
+            const event = new MessageEvent('message', {
+                data: JSON.stringify(messageData)
+            });
+            
+            // Dispatch the event
+            visualizer['mcpAdapter']['handleMessage'](event);
+            
+            console.log(`Message sent from ${sender.name} to ${receiver.name}`);
+        });
+    </script>
+</body>
+</html>

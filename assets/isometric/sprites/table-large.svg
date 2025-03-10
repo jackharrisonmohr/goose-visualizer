@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="128" height="64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Large isometric table -->
+  <g>
+    <!-- Table top (diamond shape for isometric view) -->
+    <polygon points="64,20 108,40 64,60 20,40" fill="#a67c52" stroke="#000" stroke-width="1"/>
+    
+    <!-- Table legs -->
+    <line x1="30" y1="43" x2="30" y2="58" stroke="#8b4513" stroke-width="3"/>
+    <line x1="98" y1="43" x2="98" y2="58" stroke="#8b4513" stroke-width="3"/>
+    <line x1="30" y1="43" x2="30" y2="58" stroke="#8b4513" stroke-width="3"/>
+    <line x1="98" y1="43" x2="98" y2="58" stroke="#8b4513" stroke-width="3"/>
+    
+    <!-- Wood grain details on tabletop -->
+    <line x1="40" y1="30" x2="80" y2="50" stroke="#8b4513" stroke-width="0.5" stroke-opacity="0.5"/>
+    <line x1="50" y1="28" x2="90" y2="48" stroke="#8b4513" stroke-width="0.5" stroke-opacity="0.5"/>
+    <line x1="30" y1="35" x2="70" y2="55" stroke="#8b4513" stroke-width="0.5" stroke-opacity="0.5"/>
+    <line x1="45" y1="32" x2="85" y2="52" stroke="#8b4513" stroke-width="0.5" stroke-opacity="0.5"/>
+    
+    <!-- Items on table (subtle outlines) -->
+    <ellipse cx="80" cy="35" rx="10" ry="5" fill="none" stroke="#000" stroke-width="0.3" stroke-opacity="0.3"/>
+    <rect x="40" y="35" width="10" height="5" fill="none" stroke="#000" stroke-width="0.3" stroke-opacity="0.3"/>
+  </g>
+</svg>

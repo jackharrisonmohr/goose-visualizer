@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GooseVisualizer Theme Plugin Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        #visualization-container {
+            width: 800px;
+            height: 600px;
+            border: 1px solid #ccc;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .controls {
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 10;
+        }
+        button {
+            padding: 8px 16px;
+            margin-right: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .theme-config {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .config-item {
+            margin-bottom: 10px;
+        }
+        .config-item label {
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>GooseVisualizer Theme Plugin Demo</h1>
+    
+    <div class="controls">
+        <button id="connect-btn">Connect to MCP</button>
+        <button id="disconnect-btn">Disconnect</button>
+    </div>
+    
+    <h2>Theme Selection</h2>
+    <div class="theme-select controls">
+        <button id="simple2d-theme-btn">Simple 2D Theme</button>
+        <button id="demo-theme-btn">Demo Theme</button>
+    </div>
+    
+    <h2>Theme Configuration</h2>
+    <div id="theme-config" class="theme-config">
+        <!-- Theme-specific configuration options will be generated here -->
+    </div>
+    
+    <div id="visualization-container"></div>
+    
+    <h2>Simulation Controls</h2>
+    <div class="controls">
+        <button id="add-agent-btn">Add Agent</button>
+        <button id="add-task-btn">Add Task</button>
+        <button id="assign-task-btn">Assign Task</button>
+        <button id="complete-task-btn">Complete Task</button>
+        <button id="send-message-btn">Send Message</button>
+    </div>
+    
+    <script type="module">
+        import { GooseVisualizer, DemoThemePlugin } from '../dist/index.js';
+        
+        // Create a new visualizer instance
+        const visualizer = new GooseVisualizer({
+            mcpServer: 'http://localhost:3001/sse',
+            theme: 'simple-2d',
+            elementId: 'visualization-container',
+            autoConnect: false,
+        });
+        
+        // Make visualizer globally accessible for debugging
+        window.visualizer = visualizer;
+        
+        // Register our custom demo theme plugin
+        visualizer.registerThemePlugin(DemoThemePlugin);
+        
+        // Initialize the visualizer
+        visualizer.initialize().then(() => {
+            console.log('GooseVisualizer initialized successfully');
+            
+            // Generate theme configuration UI
+            generateThemeConfigUI('simple-2d');
+        }).catch(error => {
+            console.error('Failed to initialize GooseVisualizer:', error);
+        });
+        
+        // Theme selection handlers
+        document.getElementById('simple2d-theme-btn').addEventListener('click', async () => {
+            await visualizer.setTheme('simple-2d');
+            generateThemeConfigUI('simple-2d');
+            console.log('Switched to Simple 2D theme');
+        });
+        
+        document.getElementById('demo-theme-btn').addEventListener('click', async () => {
+            await visualizer.setTheme('demo-theme');
+            generateThemeConfigUI('demo-theme');
+            console.log('Switched to Demo theme');
+        });
+        
+        // Generate configuration UI for the selected theme
+        function generateThemeConfigUI(themeName) {
+            const configContainer = document.getElementById('theme-config');
+            configContainer.innerHTML = '';
+            
+            // Get the theme info
+            const themeInfo = visualizer.themeManager.getThemes().find(t => t.name === themeName);
+            if (!themeInfo || !themeInfo.configSchema) {
+                configContainer.innerHTML = '<p>No configuration options available for this theme.</p>';
+                return;
+            }
+            
+            // Create UI for each config option
+            Object.entries(themeInfo.configSchema).forEach(([key, schema]) => {
+                const configItem = document.createElement('div');
+                configItem.className = 'config-item';
+                
+                const label = document.createElement('label');
+                label.textContent = schema.description || key;
+                label.htmlFor = `config-${key}`;
+                configItem.appendChild(label);
+                
+                let input;
+                
+                switch (schema.type) {
+                    case 'color':
+                        input = document.createElement('input');
+                        input.type = 'color';
+                        input.id = `config-${key}`;
+                        input.value = schema.defaultValue || '#000000';
+                        break;
+                        
+                    case 'number':
+                        input = document.createElement('input');
+                        input.type = 'number';
+                        input.id = `config-${key}`;
+                        input.value = schema.defaultValue || 0;
+                        break;
+                        
+                    case 'boolean':
+                        input = document.createElement('input');
+                        input.type = 'checkbox';
+                        input.id = `config-${key}`;
+                        input.checked = schema.defaultValue || false;
+                        break;
+                        
+                    case 'select':
+                        input = document.createElement('select');
+                        input.id = `config-${key}`;
+                        if (schema.options) {
+                            schema.options.forEach(option => {
+                                const optionEl = document.createElement('option');
+                                optionEl.value = option;
+                                optionEl.textContent = option;
+                                optionEl.selected = option === schema.defaultValue;
+                                input.appendChild(optionEl);
+                            });
+                        }
+                        break;
+                        
+                    case 'string':
+                    default:
+                        input = document.createElement('input');
+                        input.type = 'text';
+                        input.id = `config-${key}`;
+                        input.value = schema.defaultValue || '';
+                        break;
+                }
+                
+                // Add change handler
+                input.addEventListener('change', () => {
+                    updateThemeConfig(themeName);
+                });
+                
+                configItem.appendChild(input);
+                configContainer.appendChild(configItem);
+            });
+            
+            // Add apply button
+            const applyBtn = document.createElement('button');
+            applyBtn.textContent = 'Apply Configuration';
+            applyBtn.addEventListener('click', () => {
+                updateThemeConfig(themeName);
+            });
+            configContainer.appendChild(applyBtn);
+        }
+        
+        // Update theme configuration based on UI inputs
+        async function updateThemeConfig(themeName) {
+            const themeInfo = visualizer.themeManager.getThemes().find(t => t.name === themeName);
+            if (!themeInfo || !themeInfo.configSchema) return;
+            
+            const config = {
+                name: themeName,
+                options: {}
+            };
+            
+            // Collect values from inputs
+            Object.keys(themeInfo.configSchema).forEach(key => {
+                const input = document.getElementById(`config-${key}`);
+                if (!input) return;
+                
+                const schema = themeInfo.configSchema[key];
+                let value;
+                
+                switch (schema.type) {
+                    case 'boolean':
+                        value = input.checked;
+                        break;
+                    case 'number':
+                        value = parseFloat(input.value);
+                        break;
+                    default:
+                        value = input.value;
+                }
+                
+                config.options[key] = value;
+            });
+            
+            // Apply the configuration
+            await visualizer.setTheme(themeName, config);
+            console.log(`Applied configuration to ${themeName}:`, config);
+        }
+        
+        // Connect to MCP server
+        document.getElementById('connect-btn').addEventListener('click', () => {
+            visualizer.connect().then(() => {
+                console.log('Connected to MCP server');
+            }).catch(error => {
+                console.error('Failed to connect to MCP server:', error);
+                
+                // For demo purposes, we'll simulate a connection
+                console.log('Simulating connection for demo purposes');
+            });
+        });
+        
+        // Disconnect from MCP server
+        document.getElementById('disconnect-btn').addEventListener('click', () => {
+            visualizer.disconnect();
+            console.log('Disconnected from MCP server');
+        });
+        
+        // SIMULATION FUNCTIONS
+        // These functions simulate MCP events for demonstration purposes
+        
+        // Store agents and tasks for the manual implementation
+        const agents = [];
+        const tasks = [];
+        const messages = [];
+        
+        // Add a simulated agent
+        document.getElementById('add-agent-btn').addEventListener('click', () => {
+            // We're simulating MCP events by directly accessing the adapter's method
+            // In a real scenario, these events would come from the MCP server
+            const id = `agent-${Date.now()}`;
+            const agent = {
+                id: id,
+                name: `Agent ${id.slice(-3)}`,
+                color: getRandomColor(),
+                state: 'idle',
+                createdAt: Date.now(),
+                lastActive: Date.now(),
+            };
+            
+            // Add to local collection
+            agents.push(agent);
+            
+            console.log('Added agent:', agent);
+            
+            try {
+                // Using the adapter to dispatch the event
+                const data = {
+                    type: 'agent:registered',
+                    agent: {
+                        id: agent.id,
+                        name: agent.name,
+                        color: agent.color,
+                    }
+                };
+                
+                const event = new MessageEvent('message', {
+                    data: JSON.stringify(data)
+                });
+                
+                visualizer.mcpAdapter.handleMessage(event);
+                console.log(`Added agent: ${id}`);
+            } catch (error) {
+                console.error('Error adding agent:', error);
+            }
+        });
+        
+        // Add a simulated task
+        document.getElementById('add-task-btn').addEventListener('click', () => {
+            const id = `task-${Date.now()}`;
+            const task = {
+                id: id,
+                description: `Task ${id.slice(-3)}`,
+                state: 'pending',
+                createdAt: Date.now(),
+            };
+            
+            // Add to local collection
+            tasks.push(task);
+            
+            console.log('Added task:', task);
+            
+            try {
+                // Using the adapter to dispatch the event
+                const data = {
+                    type: 'task:added',
+                    task: {
+                        id: task.id,
+                        description: task.description
+                    }
+                };
+                
+                const event = new MessageEvent('message', {
+                    data: JSON.stringify(data)
+                });
+                
+                visualizer.mcpAdapter.handleMessage(event);
+                console.log(`Added task: ${id}`);
+            } catch (error) {
+                console.error('Error adding task:', error);
+            }
+        });
+        
+        // Assign a task to an agent
+        document.getElementById('assign-task-btn').addEventListener('click', () => {
+            try {
+                const pendingTasks = tasks.filter(task => task.state === 'pending');
+                
+                if (pendingTasks.length === 0) {
+                    console.log('No pending tasks available');
+                    return;
+                }
+                
+                if (agents.length === 0) {
+                    console.log('No agents available');
+                    return;
+                }
+                
+                // Get a random pending task and agent
+                const task = pendingTasks[Math.floor(Math.random() * pendingTasks.length)];
+                const agent = agents[Math.floor(Math.random() * agents.length)];
+                
+                // Update task state
+                task.state = 'assigned';
+                task.assignedTo = agent.id;
+                
+                // Update agent state
+                agent.state = 'working';
+                agent.lastActive = Date.now();
+                
+                console.log(`Assigned task ${task.id} to agent ${agent.id}`);
+                
+                // Dispatch event
+                const data = {
+                    type: 'task:assigned',
+                    taskId: task.id,
+                    agentId: agent.id
+                };
+                
+                const event = new MessageEvent('message', {
+                    data: JSON.stringify(data)
+                });
+                
+                visualizer.mcpAdapter.handleMessage(event);
+            } catch (error) {
+                console.error('Error assigning task:', error);
+            }
+        });
+        
+        // Complete a task
+        document.getElementById('complete-task-btn').addEventListener('click', () => {
+            try {
+                const assignedTasks = tasks.filter(task => task.state === 'assigned');
+                
+                if (assignedTasks.length === 0) {
+                    console.log('No assigned tasks available');
+                    return;
+                }
+                
+                // Get a random assigned task
+                const task = assignedTasks[Math.floor(Math.random() * assignedTasks.length)];
+                
+                // Update task state
+                task.state = 'completed';
+                task.completedAt = Date.now();
+                
+                // Update agent state if applicable
+                if (task.assignedTo) {
+                    const agent = agents.find(a => a.id === task.assignedTo);
+                    if (agent) {
+                        agent.state = 'idle';
+                        agent.lastActive = Date.now();
+                    }
+                }
+                
+                console.log(`Completed task ${task.id}`);
+                
+                // Dispatch event
+                const data = {
+                    type: 'task:completed',
+                    taskId: task.id
+                };
+                
+                const event = new MessageEvent('message', {
+                    data: JSON.stringify(data)
+                });
+                
+                visualizer.mcpAdapter.handleMessage(event);
+            } catch (error) {
+                console.error('Error completing task:', error);
+            }
+        });
+        
+        // Send a message between agents
+        document.getElementById('send-message-btn').addEventListener('click', () => {
+            try {
+                if (agents.length < 2) {
+                    console.log('Need at least 2 agents to send a message');
+                    return;
+                }
+                
+                // Select random sender and recipient
+                const senderIndex = Math.floor(Math.random() * agents.length);
+                let recipientIndex;
+                do {
+                    recipientIndex = Math.floor(Math.random() * agents.length);
+                } while (recipientIndex === senderIndex);
+                
+                const sender = agents[senderIndex];
+                const recipient = agents[recipientIndex];
+                
+                // Create message
+                const message = {
+                    id: `msg-${Date.now()}`,
+                    senderId: sender.id,
+                    receiverId: recipient.id,
+                    content: `Hello from ${sender.id} to ${recipient.id}!`,
+                    timestamp: Date.now()
+                };
+                
+                // Add to local collection
+                messages.push(message);
+                
+                // Update sender state
+                sender.state = 'active';
+                sender.lastActive = Date.now();
+                
+                console.log(`Sent message from ${sender.id} to ${recipient.id}`);
+                
+                // Dispatch event
+                const data = {
+                    type: 'message:added',
+                    message: {
+                        senderId: sender.id,
+                        receiverId: recipient.id,
+                        content: message.content
+                    }
+                };
+                
+                const event = new MessageEvent('message', {
+                    data: JSON.stringify(data)
+                });
+                
+                visualizer.mcpAdapter.handleMessage(event);
+            } catch (error) {
+                console.error('Error sending message:', error);
+            }
+        });
+        
+        // Helper function to generate random colors
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+    </script>
+</body>
+</html>

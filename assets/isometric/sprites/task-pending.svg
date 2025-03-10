@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Document background -->
+  <rect x="8" y="4" width="16" height="24" rx="2" fill="#ffffff" stroke="#666666" stroke-width="1"/>
+  
+  <!-- Code lines -->
+  <line x1="11" y1="10" x2="18" y2="10" stroke="#ffaa00" stroke-width="1.5"/>
+  <line x1="11" y1="14" x2="21" y2="14" stroke="#ffaa00" stroke-width="1.5"/>
+  <line x1="11" y1="18" x2="19" y2="18" stroke="#ffaa00" stroke-width="1.5"/>
+  <line x1="11" y1="22" x2="16" y2="22" stroke="#ffaa00" stroke-width="1.5"/>
+  
+  <!-- Status icon - Pending (clock) -->
+  <circle cx="22" cy="10" r="4" fill="#ffcc44" stroke="#ff9900" stroke-width="1"/>
+  <line x1="22" y1="8" x2="22" y2="10" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="22" y1="10" x2="24" y2="12" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

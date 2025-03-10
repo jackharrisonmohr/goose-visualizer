@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="64" height="48" viewBox="0 0 64 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Table top (isometric rectangle) -->
+  <path d="M32 8L56 20L32 32L8 20L32 8Z" fill="#b08968" stroke="#8b6b4f" stroke-width="1"/>
+  
+  <!-- Table legs -->
+  <!-- Front left leg -->
+  <path d="M14 22L14 38L18 40L18 24L14 22Z" fill="#8b6b4f" stroke="#6a5039" stroke-width="1"/>
+  
+  <!-- Front right leg -->
+  <path d="M46 22L46 38L50 40L50 24L46 22Z" fill="#8b6b4f" stroke="#6a5039" stroke-width="1"/>
+  
+  <!-- Back left leg -->
+  <path d="M18 16L18 32L22 34L22 18L18 16Z" fill="#704d33" stroke="#6a5039" stroke-width="1"/>
+  
+  <!-- Back right leg -->
+  <path d="M42 16L42 32L46 34L46 18L42 16Z" fill="#704d33" stroke="#6a5039" stroke-width="1"/>
+  
+  <!-- Table top details -->
+  <path d="M24 16L40 24" stroke="#8b6b4f" stroke-width="0.5" />
+  <path d="M24 20L40 28" stroke="#8b6b4f" stroke-width="0.5" />
+  <path d="M24 24L40 16" stroke="#8b6b4f" stroke-width="0.5" />
+  <path d="M24 28L40 20" stroke="#8b6b4f" stroke-width="0.5" />
+</svg>

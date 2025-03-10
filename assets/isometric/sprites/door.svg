@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Isometric door -->
+  <g>
+    <!-- Door frame -->
+    <polygon points="10,10 54,10 54,60 10,60" fill="#8b5a2b" stroke="#000" stroke-width="1"/>
+    
+    <!-- Door panel -->
+    <polygon points="14,14 50,14 50,56 14,56" fill="#a67c52" stroke="#000" stroke-width="1"/>
+    
+    <!-- Door handle -->
+    <circle cx="45" cy="35" r="3" fill="#d4af37" stroke="#000" stroke-width="0.5"/>
+    
+    <!-- Door details -->
+    <rect x="20" y="20" width="24" height="16" rx="1" fill="#8b5a2b" stroke="#000" stroke-width="0.5"/>
+    <rect x="20" y="40" width="24" height="10" rx="1" fill="#8b5a2b" stroke="#000" stroke-width="0.5"/>
+    
+    <!-- Sign on door -->
+    <rect x="25" y="25" width="14" height="6" rx="1" fill="#ffffff" stroke="#000" stroke-width="0.5"/>
+    <text x="32" y="29" font-family="Arial" font-size="4" text-anchor="middle" fill="#000">CAFÉ</text>
+  </g>
+</svg>

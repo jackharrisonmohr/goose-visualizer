@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="32" height="24" xmlns="http://www.w3.org/2000/svg">
+  <!-- Laptop -->
+  <g>
+    <!-- Laptop base -->
+    <rect x="4" y="16" width="24" height="4" rx="1" fill="#444" stroke="#000" stroke-width="0.5"/>
+    
+    <!-- Laptop screen (angled slightly for isometric view) -->
+    <polygon points="6,8 26,8 24,16 8,16" fill="#666" stroke="#000" stroke-width="0.5"/>
+    
+    <!-- Screen content -->
+    <polygon points="8,9 24,9 22,15 10,15" fill="#a0c8e0" stroke="#000" stroke-width="0.5"/>
+    
+    <!-- Code-like lines on screen -->
+    <line x1="10" y1="10" x2="20" y2="10" stroke="#333" stroke-width="0.5"/>
+    <line x1="10" y1="11" x2="18" y2="11" stroke="#333" stroke-width="0.5"/>
+    <line x1="10" y1="12" x2="22" y2="12" stroke="#333" stroke-width="0.5"/>
+    <line x1="10" y1="13" x2="16" y2="13" stroke="#333" stroke-width="0.5"/>
+    <line x1="10" y1="14" x2="19" y2="14" stroke="#333" stroke-width="0.5"/>
+    
+    <!-- Keyboard area -->
+    <rect x="8" y="16.5" width="16" height="2" rx="0.5" fill="#555" stroke="#000" stroke-width="0.3"/>
+  </g>
+</svg>
