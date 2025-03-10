@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GooseVisualizer ThreeJS Isometric Office</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+            color: white;
+        }
+        h1, h2 {
+            color: #fff;
+        }
+        #visualization-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        .interface-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            backdrop-filter: blur(5px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .title {
+            margin: 0;
+            font-size: 1.2rem;
+            text-shadow: 0 0 10px rgba(0, 100, 255, 0.8);
+        }
+        .controls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            z-index: 100;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: rgba(0, 123, 255, 0.7);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+        button:hover {
+            background-color: rgba(0, 86, 179, 0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        .config-panel {
+            position: fixed;
+            top: 70px;
+            right: 15px;
+            width: 250px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            transition: transform 0.3s ease;
+            transform: translateX(290px);
+        }
+        .config-panel.visible {
+            transform: translateX(0);
+        }
+        .config-toggle {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            background-color: rgba(0, 123, 255, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 101;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        .config-toggle:hover {
+            background-color: rgba(0, 86, 179, 0.9);
+        }
+        .config-item {
+            margin-bottom: 15px;
+        }
+        .config-item label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        .config-item input[type="range"] {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            -webkit-appearance: none;
+            height: 6px;
+        }
+        .config-item input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #2196F3;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        }
+        .config-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+        .status {
+            position: fixed;
+            bottom: 70px;
+            left: 15px;
+            color: rgba(255, 255, 255, 0.8);
+            font-style: italic;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 8px 12px;
+            border-radius: 4px;
+            max-width: 50%;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .status.active {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="visualization-container"></div>
+    
+    <div class="interface-overlay">
+        <h1 class="title">GooseVisualizer 3D</h1>
+    </div>
+    
+    <button class="config-toggle" id="config-toggle">⚙️</button>
+    
+    <div class="config-panel" id="config-panel">
+        <h2>Scene Settings</h2>
+        <div class="config-item">
+            <label for="cameraAngle">Camera Angle</label>
+            <input type="range" id="cameraAngle" min="15" max="75" value="45" step="5">
+            <span id="angle-value">45°</span>
+        </div>
+        <div class="config-item">
+            <label for="cameraDistance">Camera Distance</label>
+            <input type="range" id="cameraDistance" min="10" max="40" value="20" step="1">
+            <span id="distance-value">20</span>
+        </div>
+        <div class="config-item">
+            <label for="showGrid">Show Grid</label>
+            <input type="checkbox" id="showGrid" checked>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <button id="add-agent-btn">Add Agent</button>
+        <button id="add-task-btn">Add Task</button>
+        <button id="assign-task-btn">Assign Task</button>
+        <button id="complete-task-btn">Complete Task</button>
+        <button id="send-message-btn">Send Message</button>
+        <button id="random-positions-btn">Randomize Positions</button>
+        <button id="reset-btn">Reset All</button>
+    </div>
+    
+    <div class="status" id="status-message">Ready to start simulation.</div>
+
+    <!-- Load Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <script>
+        // Global variables
+        let scene, camera, renderer, controls;
+        let agents = [];
+        let tasks = [];
+        let messages = [];
+        let agentModels = new Map();
+        let taskModels = new Map();
+        let messageModels = [];
+        const occupiedPositions = new Set();
+        let gridSize = 15;
+        let cellSize = 2;
+        
+        // Initialize the visualization
+        function init() {
+            const container = document.getElementById('visualization-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            
+            // Create scene with a dark gradient background
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a1525);
+            
+            // Create camera
+            const aspect = width / height;
+            const viewSize = 20;
+            camera = new THREE.OrthographicCamera(
+                -viewSize * aspect, viewSize * aspect,
+                viewSize, -viewSize,
+                0.1, 1000
+            );
+            updateCameraPosition();
+            
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(width, height);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+            
+            // Add orbit controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.screenSpacePanning = false;
+            controls.minZoom = 0.5;
+            controls.maxZoom = 2;
+            controls.enableRotate = true;
+            
+            // Create environment
+            createEnvironment();
+            
+            // Set up UI events
+            setupUIControls();
+            
+            // Start animation loop
+            animate();
+            
+            // Update status
+            updateStatus('Three.js visualization initialized');
+        }
+        
+        // Update camera position based on UI controls
+        function updateCameraPosition() {
+            const angleSlider = document.getElementById('cameraAngle');
+            const distanceSlider = document.getElementById('cameraDistance');
+            
+            const angle = parseFloat(angleSlider.value);
+            const distance = parseFloat(distanceSlider.value);
+            
+            const angleRad = THREE.Math.degToRad(angle);
+            
+            // Calculate camera position
+            const x = distance * Math.sin(Math.PI/4);
+            const y = distance * Math.sin(angleRad);
+            const z = distance * Math.cos(Math.PI/4);
+            
+            camera.position.set(x, y, z);
+            camera.lookAt(0, 0, 0);
+            
+            if (controls) {
+                controls.update();
+            }
+            
+            // Update UI display
+            document.getElementById('angle-value').textContent = angle + '°';
+            document.getElementById('distance-value').textContent = distance;
+        }
+        
+        // Create the office environment
+        function createEnvironment() {
+            // Create a group for all environment objects
+            const environmentGroup = new THREE.Group();
+            scene.add(environmentGroup);
+            
+            // Create floor with grid texture
+            const floorGeometry = new THREE.PlaneGeometry(
+                gridSize * cellSize,
+                gridSize * cellSize
+            );
+            
+            // Create a canvas for the floor texture
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            
+            // Fill background
+            ctx.fillStyle = '#1a253e';
+            ctx.fillRect(0, 0, 512, 512);
+            
+            // Draw grid lines
+            ctx.strokeStyle = '#3a4a75';
+            ctx.lineWidth = 2;
+            const gridStep = 512 / 15;
+            
+            // Draw horizontal lines
+            for (let i = 0; i <= 15; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, i * gridStep);
+                ctx.lineTo(512, i * gridStep);
+                ctx.stroke();
+            }
+            
+            // Draw vertical lines
+            for (let i = 0; i <= 15; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * gridStep, 0);
+                ctx.lineTo(i * gridStep, 512);
+                ctx.stroke();
+            }
+            
+            // Add subtle glow in the center
+            const gradient = ctx.createRadialGradient(256, 256, 0, 256, 256, 400);
+            gradient.addColorStop(0, 'rgba(120, 170, 255, 0.2)');
+            gradient.addColorStop(1, 'rgba(30, 60, 120, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 512, 512);
+            
+            // Create texture from canvas
+            const floorTexture = new THREE.CanvasTexture(canvas);
+            floorTexture.wrapS = THREE.RepeatWrapping;
+            floorTexture.wrapT = THREE.RepeatWrapping;
+            
+            // Create floor material
+            const floorMaterial = new THREE.MeshStandardMaterial({
+                map: floorTexture,
+                roughness: 0.7,
+                metalness: 0.3,
+                emissive: 0x112244,
+                emissiveIntensity: 0.2
+            });
+            
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.y = 0;
+            floor.receiveShadow = true;
+            environmentGroup.add(floor);
+            
+            // Create grid
+            const gridHelper = new THREE.GridHelper(
+                gridSize * cellSize,
+                gridSize,
+                0x888888,
+                0x888888
+            );
+            gridHelper.position.y = 0.01; // Slightly above floor
+            gridHelper.name = 'grid';
+            gridHelper.visible = document.getElementById('showGrid').checked;
+            environmentGroup.add(gridHelper);
+            
+            // Create walls
+            createWalls(environmentGroup);
+            
+            // Create office furniture
+            createFurniture(environmentGroup);
+            
+            // Center the environment
+            environmentGroup.position.set(
+                -((gridSize * cellSize) / 2) + cellSize / 2,
+                0,
+                -((gridSize * cellSize) / 2) + cellSize / 2
+            );
+        }
+        
+        // Create walls around the perimeter
+        function createWalls(parent) {
+            const wallHeight = 5;
+            
+            // Create wall texture using canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            
+            // Base color
+            ctx.fillStyle = '#4a5c88';
+            ctx.fillRect(0, 0, 512, 512);
+            
+            // Add some noise/texture
+            for (let i = 0; i < 5000; i++) {
+                const x = Math.random() * 512;
+                const y = Math.random() * 512;
+                const size = Math.random() * 3 + 1;
+                const alpha = Math.random() * 0.1;
+                
+                ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                ctx.fillRect(x, y, size, size);
+            }
+            
+            // Draw subtle panels
+            ctx.strokeStyle = '#34425f';
+            ctx.lineWidth = 2;
+            const panelSize = 128;
+            
+            for (let x = 0; x < 512; x += panelSize) {
+                for (let y = 0; y < 512; y += panelSize) {
+                    ctx.strokeRect(x, y, panelSize, panelSize);
+                }
+            }
+            
+            // Create texture
+            const wallTexture = new THREE.CanvasTexture(canvas);
+            wallTexture.wrapS = THREE.RepeatWrapping;
+            wallTexture.wrapT = THREE.RepeatWrapping;
+            wallTexture.repeat.set(2, 1);
+            
+            const wallMaterial = new THREE.MeshStandardMaterial({
+                map: wallTexture,
+                color: 0x8090c0,
+                roughness: 0.7,
+                metalness: 0.2,
+                emissive: 0x112233,
+                emissiveIntensity: 0.1
+            });
+            
+            // North wall
+            const northWallGeometry = new THREE.BoxGeometry(
+                gridSize * cellSize, wallHeight, 0.2
+            );
+            const northWall = new THREE.Mesh(northWallGeometry, wallMaterial);
+            northWall.position.set((gridSize * cellSize) / 2, wallHeight / 2, 0);
+            northWall.castShadow = true;
+            northWall.receiveShadow = true;
+            parent.add(northWall);
+            
+            // East wall
+            const eastWallGeometry = new THREE.BoxGeometry(
+                0.2, wallHeight, gridSize * cellSize
+            );
+            const eastWall = new THREE.Mesh(eastWallGeometry, wallMaterial);
+            eastWall.position.set(
+                gridSize * cellSize, wallHeight / 2, (gridSize * cellSize) / 2
+            );
+            eastWall.castShadow = true;
+            eastWall.receiveShadow = true;
+            parent.add(eastWall);
+            
+            // South wall
+            const southWallGeometry = new THREE.BoxGeometry(
+                gridSize * cellSize, wallHeight, 0.2
+            );
+            const southWall = new THREE.Mesh(southWallGeometry, wallMaterial);
+            southWall.position.set(
+                (gridSize * cellSize) / 2, wallHeight / 2, gridSize * cellSize
+            );
+            southWall.castShadow = true;
+            southWall.receiveShadow = true;
+            parent.add(southWall);
+            
+            // West wall
+            const westWallGeometry = new THREE.BoxGeometry(
+                0.2, wallHeight, gridSize * cellSize
+            );
+            const westWall = new THREE.Mesh(westWallGeometry, wallMaterial);
+            westWall.position.set(0, wallHeight / 2, (gridSize * cellSize) / 2);
+            westWall.castShadow = true;
+            westWall.receiveShadow = true;
+            parent.add(westWall);
+            
+            // Mark walls as occupied positions
+            for (let i = 0; i < gridSize; i++) {
+                occupiedPositions.add(`0,${i}`);
+                occupiedPositions.add(`${gridSize-1},${i}`);
+                occupiedPositions.add(`${i},0`);
+                occupiedPositions.add(`${i},${gridSize-1}`);
+            }
+        }
+        
+        // Create office furniture
+        function createFurniture(parent) {
+            // Create a large desk in the center
+            const deskGeometry = new THREE.BoxGeometry(cellSize * 4, 0.8, cellSize * 2);
+            const deskMaterial = new THREE.MeshStandardMaterial({
+                color: 0x885533,
+                roughness: 0.5,
+                metalness: 0.1
+            });
+            const desk = new THREE.Mesh(deskGeometry, deskMaterial);
+            desk.position.set(cellSize * 7, 0.4, cellSize * 7);
+            desk.castShadow = true;
+            desk.receiveShadow = true;
+            parent.add(desk);
+            
+            // Mark desk positions as occupied
+            for (let x = 6; x < 10; x++) {
+                for (let z = 6; z < 9; z++) {
+                    occupiedPositions.add(`${x},${z}`);
+                }
+            }
+            
+            // Add some desks near the walls
+            createTable(parent, 3, 3);
+            createTable(parent, 11, 3);
+            createTable(parent, 3, 11);
+            createTable(parent, 11, 11);
+            
+            // Mark table positions as occupied
+            occupiedPositions.add('3,3');
+            occupiedPositions.add('11,3');
+            occupiedPositions.add('3,11');
+            occupiedPositions.add('11,11');
+            
+            // Add some decorative plants
+            createPlant(parent, 1.5, 1.5);
+            createPlant(parent, 13, 13);
+            
+            // Mark plant positions as occupied
+            occupiedPositions.add('1,1');
+            occupiedPositions.add('13,13');
+        }
+        
+        // Create a table and chair
+        function createTable(parent, x, z) {
+            // Create table
+            const tableGeometry = new THREE.BoxGeometry(cellSize * 1.5, 0.8, cellSize * 1.5);
+            const tableMaterial = new THREE.MeshStandardMaterial({
+                color: 0x885533,
+                roughness: 0.5,
+                metalness: 0.1
+            });
+            const table = new THREE.Mesh(tableGeometry, tableMaterial);
+            table.position.set(x * cellSize, 0.4, z * cellSize);
+            table.castShadow = true;
+            table.receiveShadow = true;
+            parent.add(table);
+            
+            // Create chair
+            const chairMaterial = new THREE.MeshStandardMaterial({
+                color: 0x666666,
+                roughness: 0.5,
+                metalness: 0.3
+            });
+            
+            // Chair seat
+            const seatGeometry = new THREE.BoxGeometry(cellSize * 0.6, 0.2, cellSize * 0.6);
+            const seat = new THREE.Mesh(seatGeometry, chairMaterial);
+            seat.position.set((x + 0.8) * cellSize, 0.6, z * cellSize);
+            seat.castShadow = true;
+            seat.receiveShadow = true;
+            parent.add(seat);
+            
+            // Chair back
+            const backGeometry = new THREE.BoxGeometry(cellSize * 0.6, 0.8, cellSize * 0.1);
+            const back = new THREE.Mesh(backGeometry, chairMaterial);
+            back.position.set(
+                (x + 0.8) * cellSize, 1.0, z * cellSize + cellSize * 0.25
+            );
+            back.castShadow = true;
+            back.receiveShadow = true;
+            parent.add(back);
+        }
+        
+        // Create a decorative plant
+        function createPlant(parent, x, z) {
+            // Plant pot
+            const potGeometry = new THREE.CylinderGeometry(cellSize * 0.3, cellSize * 0.2, 0.6, 8);
+            const potMaterial = new THREE.MeshStandardMaterial({
+                color: 0xcc8866,
+                roughness: 0.8,
+                metalness: 0
+            });
+            const pot = new THREE.Mesh(potGeometry, potMaterial);
+            pot.position.set(x * cellSize, 0.3, z * cellSize);
+            pot.castShadow = true;
+            pot.receiveShadow = true;
+            parent.add(pot);
+            
+            // Plant leaves
+            const leavesGeometry = new THREE.SphereGeometry(
+                cellSize * 0.5, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2
+            );
+            const leavesMaterial = new THREE.MeshStandardMaterial({
+                color: 0x33cc33,
+                roughness: 1.0,
+                metalness: 0
+            });
+            const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
+            leaves.position.set(x * cellSize, 0.6, z * cellSize);
+            leaves.scale.y = 1.5;
+            leaves.castShadow = true;
+            leaves.receiveShadow = true;
+            parent.add(leaves);
+        }
+        
+        // Find a random unoccupied position
+        function findUnoccupiedPosition() {
+            let x, z;
+            let attempts = 0;
+            
+            do {
+                x = Math.floor(Math.random() * (gridSize - 2)) + 1;
+                z = Math.floor(Math.random() * (gridSize - 2)) + 1;
+                attempts++;
+                
+                if (attempts > 100) {
+                    console.warn("Couldn't find unoccupied position after 100 attempts");
+                    return { x: 5, z: 5 };
+                }
+            } while (occupiedPositions.has(`${x},${z}`));
+            
+            // Mark as occupied
+            occupiedPositions.add(`${x},${z}`);
+            
+            return { x, z };
+        }
+        
+        // Create agent model
+        function createAgent() {
+            const id = `agent-${Date.now()}`;
+            const position = findUnoccupiedPosition();
+            
+            // Create agent data
+            const agent = {
+                id: id,
+                name: `Agent ${id.slice(-3)}`,
+                color: getRandomColor(),
+                state: 'idle',
+                position: position,
+                createdAt: Date.now()
+            };
+            
+            // Add to our collection
+            agents.push(agent);
+            
+            // Create agent 3D model
+            const agentGroup = new THREE.Group();
+            agentGroup.name = id;
+            
+            // Create agent body (capsule shape)
+            const bodyGeometry = new THREE.CylinderGeometry(0.4, 0.4, 1.2, 8);
+            const bodyMaterial = new THREE.MeshStandardMaterial({
+                color: new THREE.Color(agent.color),
+                roughness: 0.7,
+                metalness: 0.3
+            });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.position.y = 0.6;
+            body.castShadow = true;
+            body.receiveShadow = true;
+            agentGroup.add(body);
+            
+            // Create agent head
+            const headGeometry = new THREE.SphereGeometry(0.25, 16, 16);
+            const headMaterial = new THREE.MeshStandardMaterial({
+                color: 0xffddcc,
+                roughness: 0.8,
+                metalness: 0.1
+            });
+            const head = new THREE.Mesh(headGeometry, headMaterial);
+            head.position.y = 1.3;
+            head.castShadow = true;
+            head.receiveShadow = true;
+            agentGroup.add(head);
+            
+            // Create name label
+            createLabel(agent.name, agentGroup, 2.0);
+            
+            // Position the agent
+            agentGroup.position.set(
+                position.x * cellSize, 
+                0, 
+                position.z * cellSize
+            );
+            
+            // Add to scene
+            scene.add(agentGroup);
+            
+            // Store reference
+            agentModels.set(id, agentGroup);
+            
+            updateStatus(`Added agent: ${agent.name} at (${position.x}, ${position.z})`);
+            return agent;
+        }
+        
+        // Create a floating text label
+        function createLabel(text, parent, yOffset) {
+            // Create canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 128;
+            const context = canvas.getContext('2d');
+            
+            // Draw background
+            context.fillStyle = 'white';
+            context.fillRect(0, 0, 256, 128);
+            
+            // Draw text
+            context.fillStyle = 'black';
+            context.font = '24px Arial';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText(text, 128, 64);
+            
+            // Create texture and sprite
+            const texture = new THREE.CanvasTexture(canvas);
+            const material = new THREE.SpriteMaterial({ map: texture });
+            const sprite = new THREE.Sprite(material);
+            sprite.position.y = yOffset;
+            sprite.scale.set(2, 1, 1);
+            
+            parent.add(sprite);
+            return sprite;
+        }
+        
+        // Create task model
+        function createTask() {
+            const id = `task-${Date.now()}`;
+            const position = findUnoccupiedPosition();
+            
+            // Create task data
+            const task = {
+                id: id,
+                description: `Task ${id.slice(-3)}`,
+                state: 'pending',
+                position: position,
+                createdAt: Date.now()
+            };
+            
+            // Add to our collection
+            tasks.push(task);
+            
+            // Create task 3D model (floating document)
+            const taskGroup = new THREE.Group();
+            taskGroup.name = id;
+            
+            // Document
+            const docGeometry = new THREE.BoxGeometry(0.8, 0.05, 1);
+            const docMaterial = new THREE.MeshStandardMaterial({
+                color: 0xffffff,
+                roughness: 0.5,
+                metalness: 0.1
+            });
+            const doc = new THREE.Mesh(docGeometry, docMaterial);
+            doc.castShadow = true;
+            doc.receiveShadow = true;
+            taskGroup.add(doc);
+            
+            // Document lines
+            const lineMaterial = new THREE.MeshBasicMaterial({ color: 0x000088 });
+            for (let i = 0; i < 3; i++) {
+                const lineGeometry = new THREE.BoxGeometry(0.6, 0.06, 0.02);
+                const line = new THREE.Mesh(lineGeometry, lineMaterial);
+                line.position.y = 0.03;
+                line.position.z = -0.3 + i * 0.3;
+                taskGroup.add(line);
+            }
+            
+            // Create state indicator (colored sphere)
+            const indicatorGeometry = new THREE.SphereGeometry(0.15, 16, 16);
+            const indicatorMaterial = new THREE.MeshStandardMaterial({
+                color: getTaskStateColor(task.state),
+                emissive: getTaskStateColor(task.state),
+                emissiveIntensity: 0.5
+            });
+            const indicator = new THREE.Mesh(indicatorGeometry, indicatorMaterial);
+            indicator.position.set(0.4, 0.2, 0.5);
+            taskGroup.add(indicator);
+            
+            // Store indicator reference for later updates
+            taskGroup.userData.indicator = indicator;
+            
+            // Create label
+            createLabel(task.description, taskGroup, 1.0);
+            
+            // Position the task
+            taskGroup.position.set(
+                position.x * cellSize,
+                0.5, // Floating above ground
+                position.z * cellSize
+            );
+            
+            // Add animation data
+            taskGroup.userData.floatAnimation = {
+                baseY: 0.5,
+                amplitude: 0.2,
+                speed: 1.5,
+                phase: Math.random() * Math.PI * 2
+            };
+            
+            // Add to scene
+            scene.add(taskGroup);
+            
+            // Store reference
+            taskModels.set(id, taskGroup);
+            
+            updateStatus(`Added task: ${task.description} at (${position.x}, ${position.z})`);
+            return task;
+        }
+        
+        // Create message between agents
+        function createMessage(senderId, receiverId) {
+            // Find sender and receiver
+            const sender = agents.find(a => a.id === senderId);
+            const receiver = agents.find(a => a.id === receiverId);
+            
+            if (!sender || !receiver) {
+                updateStatus('Cannot create message: sender or receiver not found');
+                return null;
+            }
+            
+            // Create message data
+            const message = {
+                id: `msg-${Date.now()}`,
+                senderId: sender.id,
+                receiverId: receiver.id,
+                content: `Hello from ${sender.name} to ${receiver.name}!`,
+                timestamp: Date.now()
+            };
+            
+            // Add to our collection
+            messages.push(message);
+            
+            // Create message 3D model (envelope)
+            const messageGroup = new THREE.Group();
+            messageGroup.name = message.id;
+            
+            // Envelope body
+            const envelopeGeometry = new THREE.BoxGeometry(0.4, 0.02, 0.3);
+            const envelopeMaterial = new THREE.MeshStandardMaterial({
+                color: 0xffffcc,
+                roughness: 0.5,
+                metalness: 0.1
+            });
+            const envelope = new THREE.Mesh(envelopeGeometry, envelopeMaterial);
+            envelope.castShadow = true;
+            envelope.receiveShadow = true;
+            messageGroup.add(envelope);
+            
+            // Envelope flap
+            const flapGeometry = new THREE.ConeGeometry(0.15, 0.3, 4);
+            flapGeometry.rotateZ(Math.PI);
+            flapGeometry.rotateY(Math.PI/4);
+            const flap = new THREE.Mesh(flapGeometry, envelopeMaterial);
+            flap.position.z = -0.15;
+            flap.position.y = 0.02;
+            messageGroup.add(flap);
+            
+            // Get positions
+            const senderModel = agentModels.get(sender.id);
+            const receiverModel = agentModels.get(receiver.id);
+            
+            const startPos = new THREE.Vector3().copy(senderModel.position);
+            startPos.y = 1.5;
+            
+            const endPos = new THREE.Vector3().copy(receiverModel.position);
+            endPos.y = 1.5;
+            
+            // Position at sender
+            messageGroup.position.copy(startPos);
+            
+            // Store animation data
+            messageGroup.userData = {
+                startPos: startPos,
+                endPos: endPos,
+                startTime: Date.now(),
+                duration: 1500,
+                message: message
+            };
+            
+            // Add to scene
+            scene.add(messageGroup);
+            
+            // Store reference
+            messageModels.push(messageGroup);
+            
+            updateStatus(`Sending message from ${sender.name} to ${receiver.name}`);
+            return message;
+        }
+        
+        // Assign a task to an agent
+        function assignTask() {
+            // Find pending tasks and available agents
+            const pendingTasks = tasks.filter(t => t.state === 'pending');
+            if (pendingTasks.length === 0) {
+                updateStatus('No pending tasks available');
+                return;
+            }
+            
+            if (agents.length === 0) {
+                updateStatus('No agents available');
+                return;
+            }
+            
+            // Randomly select a task and agent
+            const task = pendingTasks[Math.floor(Math.random() * pendingTasks.length)];
+            const agent = agents[Math.floor(Math.random() * agents.length)];
+            
+            // Update task state
+            task.state = 'assigned';
+            task.assignedTo = agent.id;
+            
+            // Update agent state
+            agent.state = 'working';
+            agent.assignedTaskId = task.id;
+            
+            // Update task appearance
+            const taskModel = taskModels.get(task.id);
+            if (taskModel && taskModel.userData.indicator) {
+                const indicator = taskModel.userData.indicator;
+                indicator.material.color.set(getTaskStateColor('assigned'));
+                indicator.material.emissive.set(getTaskStateColor('assigned'));
+            }
+            
+            // Move agent to task
+            const agentModel = agentModels.get(agent.id);
+            if (agentModel) {
+                // Remove agent from current position
+                const posKey = `${agent.position.x},${agent.position.z}`;
+                occupiedPositions.delete(posKey);
+                
+                // Move agent to task position
+                agent.position = { x: task.position.x, z: task.position.z };
+                agentModel.position.set(
+                    agent.position.x * cellSize,
+                    0,
+                    agent.position.z * cellSize
+                );
+                
+                // Add working animation
+                agentModel.userData.workAnimation = {
+                    time: 0,
+                    speed: 5
+                };
+                
+                // Mark position as occupied
+                occupiedPositions.add(`${agent.position.x},${agent.position.z}`);
+            }
+            
+            updateStatus(`Assigned task ${task.description} to agent ${agent.name}`);
+        }
+        
+        // Complete a task
+        function completeTask() {
+            // Find assigned tasks
+            const assignedTasks = tasks.filter(t => t.state === 'assigned');
+            if (assignedTasks.length === 0) {
+                updateStatus('No assigned tasks available');
+                return;
+            }
+            
+            // Randomly select a task
+            const task = assignedTasks[Math.floor(Math.random() * assignedTasks.length)];
+            
+            // Update task state
+            task.state = 'completed';
+            task.completedAt = Date.now();
+            
+            // Update task appearance
+            const taskModel = taskModels.get(task.id);
+            if (taskModel && taskModel.userData.indicator) {
+                const indicator = taskModel.userData.indicator;
+                indicator.material.color.set(getTaskStateColor('completed'));
+                indicator.material.emissive.set(getTaskStateColor('completed'));
+            }
+            
+            // Create completion effect
+            if (taskModel) {
+                createCompletionEffect(taskModel.position);
+            }
+            
+            // Update agent state if assigned
+            if (task.assignedTo) {
+                const agent = agents.find(a => a.id === task.assignedTo);
+                if (agent) {
+                    agent.state = 'idle';
+                    agent.assignedTaskId = null;
+                    
+                    const agentModel = agentModels.get(agent.id);
+                    if (agentModel) {
+                        // Reset working animation
+                        agentModel.userData.workAnimation = null;
+                    }
+                }
+            }
+            
+            updateStatus(`Completed task: ${task.description}`);
+        }
+        
+        // Create a completion effect
+        function createCompletionEffect(position) {
+            // Create particle group
+            const particleGroup = new THREE.Group();
+            const particleCount = 20;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const size = Math.random() * 0.2 + 0.05;
+                const geometry = new THREE.BoxGeometry(size, size, size);
+                const material = new THREE.MeshBasicMaterial({
+                    color: 0x00ff00,
+                    transparent: true,
+                    opacity: 1
+                });
+                
+                const particle = new THREE.Mesh(geometry, material);
+                
+                // Random position around task
+                const radius = 0.5;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.random() * Math.PI;
+                
+                particle.position.x = position.x + radius * Math.sin(phi) * Math.cos(theta);
+                particle.position.y = position.y + radius * Math.sin(phi) * Math.sin(theta);
+                particle.position.z = position.z + radius * Math.cos(phi);
+                
+                // Random velocity
+                particle.userData.velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 4,
+                    Math.random() * 4,
+                    (Math.random() - 0.5) * 4
+                );
+                
+                particleGroup.add(particle);
+            }
+            
+            // Add to scene
+            scene.add(particleGroup);
+            
+            // Set up animation
+            particleGroup.userData = {
+                startTime: Date.now(),
+                duration: 1500
+            };
+            
+            // Add to custom list for updates
+            completionEffects.push(particleGroup);
+        }
+        
+        // Store completion effects
+        const completionEffects = [];
+        
+        // Get color for task state
+        function getTaskStateColor(state) {
+            switch (state) {
+                case 'pending': return 0xffaa00;
+                case 'assigned': return 0x0088ff;
+                case 'completed': return 0x00cc00;
+                default: return 0xcccccc;
+            }
+        }
+        
+        // Get random color
+        function getRandomColor() {
+            const hue = Math.floor(Math.random() * 360);
+            return `hsl(${hue}, 70%, 60%)`;
+        }
+        
+        // Reset the visualization
+        function resetAll() {
+            // Remove all agents
+            agents.forEach(agent => {
+                const model = agentModels.get(agent.id);
+                if (model) {
+                    scene.remove(model);
+                }
+            });
+            agents = [];
+            agentModels.clear();
+            
+            // Remove all tasks
+            tasks.forEach(task => {
+                const model = taskModels.get(task.id);
+                if (model) {
+                    scene.remove(model);
+                }
+            });
+            tasks = [];
+            taskModels.clear();
+            
+            // Remove all messages
+            messageModels.forEach(model => {
+                scene.remove(model);
+            });
+            messages = [];
+            messageModels = [];
+            
+            // Clear occupied positions (except walls and furniture)
+            occupiedPositions.clear();
+            
+            // Re-mark walls as occupied
+            for (let i = 0; i < gridSize; i++) {
+                occupiedPositions.add(`0,${i}`);
+                occupiedPositions.add(`${gridSize-1},${i}`);
+                occupiedPositions.add(`${i},0`);
+                occupiedPositions.add(`${i},${gridSize-1}`);
+            }
+            
+            // Re-mark furniture
+            for (let x = 6; x < 10; x++) {
+                for (let z = 6; z < 9; z++) {
+                    occupiedPositions.add(`${x},${z}`);
+                }
+            }
+            occupiedPositions.add('3,3');
+            occupiedPositions.add('11,3');
+            occupiedPositions.add('3,11');
+            occupiedPositions.add('11,11');
+            occupiedPositions.add('1,1');
+            occupiedPositions.add('13,13');
+            
+            updateStatus('Reset all entities');
+        }
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const now = Date.now();
+            const deltaTime = (now - (lastTime || now)) / 1000;
+            lastTime = now;
+            
+            // Update messages
+            updateMessages(deltaTime, now);
+            
+            // Update agent animations
+            updateAgents(deltaTime);
+            
+            // Update task animations
+            updateTasks(deltaTime);
+            
+            // Update completion effects
+            updateCompletionEffects(now);
+            
+            // Update controls
+            controls.update();
+            
+            // Render
+            renderer.render(scene, camera);
+        }
+        let lastTime = null;
+        
+        // Update messages
+        function updateMessages(deltaTime, now) {
+            const completed = [];
+            
+            messageModels.forEach((model, index) => {
+                // Calculate animation progress
+                const elapsed = now - model.userData.startTime;
+                const progress = Math.min(elapsed / model.userData.duration, 1);
+                
+                // Use ease function for smooth motion
+                const t = easeInOutCubic(progress);
+                
+                // Update position
+                const startPos = model.userData.startPos;
+                const endPos = model.userData.endPos;
+                
+                // Linear interpolation for x and z
+                const x = startPos.x + (endPos.x - startPos.x) * t;
+                const z = startPos.z + (endPos.z - startPos.z) * t;
+                
+                // Arc for height
+                const y = startPos.y + Math.sin(progress * Math.PI) * 2;
+                
+                model.position.set(x, y, z);
+                
+                // Rotate as it moves
+                model.rotation.y += deltaTime * 5;
+                
+                // Check if complete
+                if (progress >= 1) {
+                    completed.push(index);
+                    
+                    // Show received effect
+                    const message = model.userData.message;
+                    const receiverModel = agentModels.get(message.receiverId);
+                    if (receiverModel) {
+                        showReceivedEffect(receiverModel);
+                    }
+                }
+            });
+            
+            // Remove completed messages (in reverse order)
+            for (let i = completed.length - 1; i >= 0; i--) {
+                const index = completed[i];
+                const model = messageModels[index];
+                
+                scene.remove(model);
+                messageModels.splice(index, 1);
+            }
+        }
+        
+        // Show received effect
+        function showReceivedEffect(agentModel) {
+            // Create ring geometry
+            const geometry = new THREE.RingGeometry(0.1, 0.5, 16);
+            const material = new THREE.MeshBasicMaterial({
+                color: 0xffff00,
+                transparent: true,
+                opacity: 1.0,
+                side: THREE.DoubleSide
+            });
+            
+            const ring = new THREE.Mesh(geometry, material);
+            ring.position.y = 2.0;
+            ring.rotation.x = Math.PI / 2;
+            
+            // Add to agent
+            agentModel.add(ring);
+            
+            // Set up animation
+            const startTime = Date.now();
+            const duration = 1000;
+            
+            function expandEffect() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Scale up and fade out
+                const scale = 1 + progress * 2;
+                ring.scale.set(scale, scale, scale);
+                material.opacity = 1 - progress;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(expandEffect);
+                } else {
+                    agentModel.remove(ring);
+                }
+            }
+            
+            expandEffect();
+        }
+        
+        // Update agents
+        function updateAgents(deltaTime) {
+            agentModels.forEach((model, id) => {
+                const agent = agents.find(a => a.id === id);
+                if (!agent) return;
+                
+                // Working animation
+                if (agent.state === 'working' && model.userData.workAnimation) {
+                    const anim = model.userData.workAnimation;
+                    anim.time += deltaTime * anim.speed;
+                    
+                    // Rock back and forth
+                    model.rotation.z = Math.sin(anim.time) * 0.1;
+                } else {
+                    model.rotation.z = 0;
+                }
+                
+                // Idle animation
+                if (!model.userData.idleAnimation) {
+                    model.userData.idleAnimation = {
+                        time: Math.random() * Math.PI * 2,
+                        speed: 1
+                    };
+                }
+                
+                const idleAnim = model.userData.idleAnimation;
+                idleAnim.time += deltaTime * idleAnim.speed;
+                
+                // Gentle bobbing when idle
+                if (agent.state !== 'working') {
+                    model.position.y = Math.sin(idleAnim.time) * 0.05;
+                }
+            });
+        }
+        
+        // Update tasks
+        function updateTasks(deltaTime) {
+            taskModels.forEach((model, id) => {
+                // Floating animation
+                if (model.userData.floatAnimation) {
+                    const anim = model.userData.floatAnimation;
+                    anim.phase += deltaTime * anim.speed;
+                    
+                    const y = anim.baseY + Math.sin(anim.phase) * anim.amplitude;
+                    model.position.y = y;
+                }
+                
+                // Gentle rotation
+                model.rotation.y += deltaTime * 0.5;
+            });
+        }
+        
+        // Update completion effects
+        function updateCompletionEffects(now) {
+            const completed = [];
+            
+            completionEffects.forEach((group, index) => {
+                const elapsed = now - group.userData.startTime;
+                const progress = elapsed / group.userData.duration;
+                
+                if (progress < 1) {
+                    // Update particles
+                    group.children.forEach(particle => {
+                        // Update position based on velocity
+                        particle.position.x += particle.userData.velocity.x * 0.01;
+                        particle.position.y += particle.userData.velocity.y * 0.01;
+                        particle.position.z += particle.userData.velocity.z * 0.01;
+                        
+                        // Apply gravity
+                        particle.userData.velocity.y -= 0.1;
+                        
+                        // Slow down
+                        particle.userData.velocity.x *= 0.99;
+                        particle.userData.velocity.z *= 0.99;
+                        
+                        // Fade out
+                        particle.material.opacity = 1 - progress;
+                        
+                        // Rotate
+                        particle.rotation.x += 0.1;
+                        particle.rotation.y += 0.1;
+                    });
+                } else {
+                    completed.push(index);
+                }
+            });
+            
+            // Remove completed effects
+            for (let i = completed.length - 1; i >= 0; i--) {
+                const index = completed[i];
+                scene.remove(completionEffects[index]);
+                completionEffects.splice(index, 1);
+            }
+        }
+        
+        // Easing function
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+        
+        // Set up UI controls
+        function setupUIControls() {
+            // Config panel toggle
+            document.getElementById('config-toggle').addEventListener('click', () => {
+                const panel = document.getElementById('config-panel');
+                panel.classList.toggle('visible');
+            });
+            
+            // Camera controls
+            document.getElementById('cameraAngle').addEventListener('input', updateCameraPosition);
+            document.getElementById('cameraDistance').addEventListener('input', updateCameraPosition);
+            
+            // Grid visibility
+            document.getElementById('showGrid').addEventListener('change', e => {
+                const grid = scene.getObjectByName('grid');
+                if (grid) {
+                    grid.visible = e.target.checked;
+                }
+            });
+            
+            // Add agent
+            document.getElementById('add-agent-btn').addEventListener('click', createAgent);
+            
+            // Add task
+            document.getElementById('add-task-btn').addEventListener('click', createTask);
+            
+            // Assign task
+            document.getElementById('assign-task-btn').addEventListener('click', assignTask);
+            
+            // Complete task
+            document.getElementById('complete-task-btn').addEventListener('click', completeTask);
+            
+            // Send message
+            document.getElementById('send-message-btn').addEventListener('click', () => {
+                if (agents.length < 2) {
+                    updateStatus('Need at least 2 agents to send a message');
+                    return;
+                }
+                
+                // Select random sender and receiver
+                const senderIndex = Math.floor(Math.random() * agents.length);
+                let receiverIndex;
+                do {
+                    receiverIndex = Math.floor(Math.random() * agents.length);
+                } while (receiverIndex === senderIndex);
+                
+                const sender = agents[senderIndex];
+                const receiver = agents[receiverIndex];
+                
+                createMessage(sender.id, receiver.id);
+            });
+            
+            // Randomize positions
+            document.getElementById('random-positions-btn').addEventListener('click', () => {
+                agents.forEach(agent => {
+                    // Remove from current position
+                    const posKey = `${agent.position.x},${agent.position.z}`;
+                    occupiedPositions.delete(posKey);
+                    
+                    // Find new position
+                    const position = findUnoccupiedPosition();
+                    agent.position = position;
+                    
+                    // Update model
+                    const model = agentModels.get(agent.id);
+                    if (model) {
+                        model.position.set(
+                            position.x * cellSize,
+                            model.position.y,
+                            position.z * cellSize
+                        );
+                    }
+                });
+                
+                updateStatus('Randomized agent positions');
+            });
+            
+            // Reset all
+            document.getElementById('reset-btn').addEventListener('click', resetAll);
+        }
+        
+        // Update status message with animation
+        function updateStatus(message) {
+            const statusEl = document.getElementById('status-message');
+            statusEl.textContent = message;
+            statusEl.classList.add('active');
+            
+            // Auto-hide after 3 seconds
+            clearTimeout(statusEl.timeout);
+            statusEl.timeout = setTimeout(() => {
+                statusEl.classList.remove('active');
+            }, 3000);
+            
+            console.log(message);
+        }
+        
+        // Add light
+        function addLights() {
+            // Ambient light (dim blue)
+            const ambientLight = new THREE.AmbientLight(0x445e7f, 0.4);
+            scene.add(ambientLight);
+            
+            // Main directional light (warm)
+            const mainLight = new THREE.DirectionalLight(0xffd0a8, 0.8);
+            mainLight.position.set(15, 20, 15);
+            mainLight.castShadow = true;
+            
+            // Configure shadow
+            mainLight.shadow.mapSize.width = 2048;
+            mainLight.shadow.mapSize.height = 2048;
+            mainLight.shadow.camera.near = 0.5;
+            mainLight.shadow.camera.far = 50;
+            mainLight.shadow.camera.left = -20;
+            mainLight.shadow.camera.right = 20;
+            mainLight.shadow.camera.top = 20;
+            mainLight.shadow.camera.bottom = -20;
+            
+            scene.add(mainLight);
+            
+            // Rim light (blue)
+            const rimLight = new THREE.DirectionalLight(0x6495ED, 0.5);
+            rimLight.position.set(-15, 10, -15);
+            scene.add(rimLight);
+            
+            // Spot light 
+            const spotLight = new THREE.SpotLight(0xffffff, 0.6);
+            spotLight.position.set(0, 30, 0);
+            spotLight.angle = Math.PI / 6;
+            spotLight.penumbra = 0.5;
+            spotLight.decay = 1;
+            spotLight.distance = 50;
+            spotLight.castShadow = true;
+            scene.add(spotLight);
+        }
+        
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            init();
+            addLights();
+        });
+    </script>
+</body>
+</html>
